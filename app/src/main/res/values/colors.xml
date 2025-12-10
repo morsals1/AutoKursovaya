@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Основные цвета -->
+    <color name="primary">#2196F3</color>
+    <color name="primary_dark">#1976D2</color>
+    <color name="primary_light">#BBDEFB</color>
+    <color name="white">#FFFFFF</color>
+
+    <color name="accent">#FF9800</color>
+    <color name="accent_dark">#F57C00</color>
+    <color name="accent_light">#FFE0B2</color>
+
+    <!-- Текст -->
+    <color name="text_primary">#212121</color>
+    <color name="text_secondary">#757575</color>
+    <color name="text_hint">#BDBDBD</color>
+    <color name="text_white">#FFFFFF</color>
+
+    <!-- Фоны -->
+    <color name="background">#F5F5F5</color>
+    <color name="surface">#FFFFFF</color>
+    <color name="error">#F44336</color>
+
+    <!-- Разделители -->
+    <color name="divider">#E0E0E0</color>
+    <color name="divider_dark">#BDBDBD</color>
+
+    <!-- Категории -->
+    <color name="category_fuel">#4CAF50</color>
+    <color name="category_service">#2196F3</color>
+    <color name="category_tires">#FF9800</color>
+    <color name="category_tax">#F44336</color>
+    <color name="category_insurance">#9C27B0</color>
+    <color name="category_repair">#795548</color>
+    <color name="category_wash">#00BCD4</color>
+    <color name="category_other">#9E9E9E</color>
+
+    <!-- Статусы -->
+    <color name="green">#4CAF50</color>
+    <color name="red">#F44336</color>
+    <color name="orange">#FF9800</color>
+    <color name="blue">#2196F3</color>
+    <color name="purple">#9C27B0</color>
+    <color name="yellow">#FFEB3B</color>
+
+    <!-- Градиенты -->
+    <color name="gradient_start">#2196F3</color>
+    <color name="gradient_end">#1976D2</color>
+</resources>

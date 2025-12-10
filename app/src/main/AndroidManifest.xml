@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Разрешения -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- Фичи камеры -->
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="АвтоУчёт"
+        android:theme="@style/Theme.MaterialComponents.Light.NoActionBar"
+        android:supportsRtl="true"
+        tools:targetApi="31">
+
+        <!-- Main Activity -->
+        <activity
+            android:name=".Views.MainActivity"
+            android:exported="true"
+            android:screenOrientation="portrait">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- Add Expense Activity -->
+        <activity
+            android:name=".Views.AddExpenseActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+
+        <!-- Analytics Activity -->
+        <activity
+            android:name=".Views.AnalyticsActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+
+        <!-- Car Settings Activity -->
+        <activity
+            android:name=".Views.CarSettingsActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+
+        <!-- Reminders Activity -->
+        <activity
+            android:name=".Views.RemindersActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+
+    </application>
+
+</manifest>

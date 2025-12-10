@@ -1,0 +1,186 @@
+<resources>
+    <!-- Общие -->
+    <string name="app_name">АвтоУчёт</string>
+    <string name="save">Сохранить</string>
+    <string name="cancel">Отмена</string>
+    <string name="back">Назад</string>
+    <string name="edit">Изменить</string>
+    <string name="delete">Удалить</string>
+    <string name="confirm">Подтвердить</string>
+
+    <!-- Главный экран -->
+    <string name="current_mileage">Текущий пробег: %d км</string>
+    <string name="total_expenses">Общие расходы: %s</string>
+    <string name="economy">ЭКОНОМИЯ: %s</string>
+    <string name="month_comparison">%s%% к прошлому месяцу</string>
+    <string name="recent_expenses">ПОСЛЕДНИЕ ОПЕРАЦИИ</string>
+    <string name="show_all_records">Показать все записи</string>
+    <string name="add_first_car">Добавьте ваш первый автомобиль</string>
+    <string name="start_tracking_expenses">Начните отслеживать расходы на авто</string>
+    <string name="add_car_button">Добавить автомобиль</string>
+
+    <!-- Добавление расхода -->
+    <string name="new_expense">НОВЫЙ РАСХОД</string>
+    <string name="input_method">Способ добавления:</string>
+    <string name="manual_input">Вручную</string>
+    <string name="receipt_input">Чек</string>
+    <string name="manual_input_title">─── РУЧНОЙ ВВОД ───</string>
+    <string name="amount">Сумма</string>
+    <string name="category">Категория</string>
+    <string name="date">Дата</string>
+    <string name="mileage">Пробег</string>
+    <string name="last_mileage_hint">(последний +0 км)</string>
+    <string name="shop_name">Магазин</string>
+    <string name="comment">Комментарий</string>
+    <string name="use_template">Использовать шаблон</string>
+    <string name="save_expense">СОХРАНИТЬ</string>
+    <string name="scan_receipt_title">─── СКАНИРОВАНИЕ ЧЕКА ───</string>
+    <string name="scan_instructions">Наведите камеру на QR-код на чеке</string>
+    <string name="open_camera">📷 ОТКРЫТЬ КАМЕРУ</string>
+    <string name="scan_result">*Распознано автоматически:</string>
+    <string name="scan_amount">• Сумма: %s</string>
+    <string name="scan_category">• Категория: %s</string>
+    <string name="scan_shop">• Магазин: %s</string>
+
+    <!-- Категории -->
+    <string-array name="categories">
+        <item>Топливо</item>
+        <item>Обслуживание</item>
+        <item>Шины</item>
+        <item>Налоги</item>
+        <item>Страховка</item>
+        <item>Ремонт</item>
+        <item>Мойка</item>
+        <item>Прочее</item>
+    </string-array>
+
+    <!-- Настройки шин -->
+    <string name="tire_settings">Настройки шин</string>
+    <string name="tire_type">Тип резины</string>
+    <string name="create_reminder">Создать напоминание о следующей замене</string>
+    <string name="remind_after">Напомнить через:</string>
+    <string name="years">лет</string>
+    <string name="km">км</string>
+    <string name="or">или</string>
+
+    <!-- Аналитика -->
+    <string name="analytics">АНАЛИТИКА</string>
+    <string name="period">Период</string>
+    <string name="general_statistics">ОБЩАЯ СТАТИСТИКА:</string>
+    <string name="total_expenses_label">• Всего расходов: %s</string>
+    <string name="average_daily">• Средний день: %s</string>
+    <string name="expense_per_km">• Расход на 1 км: %s</string>
+    <string name="category_distribution">─── РАСПРЕДЕЛЕНИЕ ПО КАТЕГОРИЯМ ───</string>
+    <string name="monthly_chart">─── ГРАФИК ПО МЕСЯЦАМ ───</string>
+    <string name="seasonal_analytics">─── СЕЗОННАЯ АНАЛИТИКА ───</string>
+    <string name="winter_expenses">ЗИМНИЕ РАСХОДЫ (окт-март):</string>
+    <string name="winter_average">• Среднемесячно: %s</string>
+    <string name="summer_expenses">ЛЕТНИЕ РАСХОДЫ (апр-сен):</string>
+    <string name="summer_average">• Среднемесячно: %s</string>
+    <string name="season_comparison">• %s%% к летнему периоду</string>
+    <string name="main_winter_items">Основные зимние статьи:</string>
+    <string name="heating">- Подогрев/отопление</string>
+    <string name="winter_tires">- Зимняя резина</string>
+    <string name="antifreeze">- Незамерзайка</string>
+    <string name="export_excel">📊 Экспорт в Excel</string>
+
+    <!-- Настройки авто -->
+    <string name="car_settings">НАСТРОЙКИ АВТОМОБИЛЯ</string>
+    <string name="my_car">МОЙ АВТОМОБИЛЬ</string>
+    <string name="brand">Марка</string>
+    <string name="model">Модель</string>
+    <string name="year">Год выпуска</string>
+    <string name="for_tax_calculation">─── ДЛЯ РАСЧЁТА НАЛОГА ───</string>
+    <string name="horsepower">Мощность (л.с.)</string>
+    <string name="registration_region">Регион регистрации</string>
+    <string name="calculate_tax">Рассчитать налог</string>
+    <string name="tax_rate">Ставка в регионе: %.0f ₽/л.с.</string>
+    <string name="yearly_tax">Годовой налог: %s</string>
+    <string name="monthly_tax">Ежемесячно: %s</string>
+    <string name="compare_region">Сравнить с другим регионом</string>
+    <string name="current_data">─── ТЕКУЩИЕ ДАННЫЕ ───</string>
+    <string name="current_mileage_label">Текущий пробег (км)</string>
+    <string name="auto_update_hint">(обновляется автоматически при добавлении расходов)</string>
+    <string name="average_consumption">Средний расход топлива:</string>
+    <string name="liters_per_100km">л/100км</string>
+    <string name="save_consumption">Сохранить</string>
+    <string name="management">─── УПРАВЛЕНИЕ ───</string>
+    <string name="add_another_car">+ Добавить ещё автомобиль</string>
+    <string name="create_backup">📋 Создать резервную копию</string>
+    <string name="export_all_data">📤 Экспорт всех данных</string>
+    <string name="about_app">ℹ️ О приложении</string>
+
+    <!-- Напоминания -->
+    <string name="reminders">НАПОМИНАНИЯ</string>
+    <string name="upcoming_reminders">БЛИЖАЙШИЕ НАПОМИНАНИЯ:</string>
+    <string name="all_reminders">─── ВСЕ НАПОМИНАНИЯ ───</string>
+    <string name="auto_reminders_hint">Все напоминания создаются автоматически\nпри добавлении расходов</string>
+    <string name="add_reminder">ДОБАВИТЬ НАПОМИНАНИЕ</string>
+    <string name="reminder_type">Тип напоминания</string>
+    <string name="reminder_event">Событие</string>
+    <string name="reminder_date">Дата</string>
+    <string name="reminder_mileage">Пробег (км)</string>
+    <string name="repeat_every">Повторять каждые (месяцев)</string>
+    <string name="create_reminder_button">СОЗДАТЬ НАПОМИНАНИЕ</string>
+    <string name="postpone">Отложить на неделю</string>
+    <string name="complete">Выполнить</string>
+    <string name="completed">✅</string>
+
+    <!-- Типы напоминаний -->
+    <string-array name="reminder_types">
+        <item>По дате</item>
+        <item>По пробегу</item>
+        <item>Периодическое</item>
+    </string-array>
+
+    <!-- События напоминаний -->
+    <string-array name="reminder_events">
+        <item>Замена масла</item>
+        <item>Замена фильтров</item>
+        <item>Замена шин</item>
+        <item>Страховка ОСАГО</item>
+        <item>Техосмотр</item>
+        <item>Транспортный налог</item>
+        <item>Плановое ТО</item>
+    </string-array>
+
+    <!-- Типы резины -->
+    <string-array name="tire_types">
+        <item>Зимняя</item>
+        <item>Летняя</item>
+        <item>Всесезонная</item>
+    </string-array>
+
+    <!-- Периоды -->
+    <string-array name="periods">
+        <item>Текущий месяц</item>
+        <item>Прошлый месяц</item>
+        <item>Этот квартал</item>
+        <item>Прошлый квартал</item>
+        <item>Этот год</item>
+        <item>Прошлый год</item>
+        <item>Произвольный период</item>
+    </string-array>
+
+    <!-- Марки автомобилей -->
+    <string-array name="car_brands">
+        <item>Volkswagen</item>
+        <item>Audi</item>
+        <item>BMW</item>
+        <item>Mercedes-Benz</item>
+        <item>Toyota</item>
+        <item>Honda</item>
+        <item>Ford</item>
+        <item>Chevrolet</item>
+        <item>Hyundai</item>
+        <item>Kia</item>
+        <item>Nissan</item>
+        <item>Mazda</item>
+        <item>Skoda</item>
+        <item>Renault</item>
+        <item>Peugeot</item>
+        <item>Lada (ВАЗ)</item>
+        <item>УАЗ</item>
+        <item>ГАЗ</item>
+    </string-array>
+</resources>
