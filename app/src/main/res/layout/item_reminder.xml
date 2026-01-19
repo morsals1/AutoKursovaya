@@ -2,13 +2,14 @@
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="16dp"
-    android:background="@drawable/bg_outline"
-    android:layout_marginBottom="8dp">
+    android:paddingVertical="12dp"
+    android:paddingHorizontal="16dp"
+    android:background="?android:attr/selectableItemBackground">
 
-    <!-- Заголовок -->
+    <!-- Текстовый контент слева -->
     <TextView
         android:id="@+id/titleTextView"
         android:layout_width="0dp"
@@ -17,57 +18,96 @@
         android:textSize="16sp"
         android:textStyle="bold"
         android:textColor="@color/text_primary"
-        app:layout_constraintEnd_toStartOf="@id/completedTextView"
+        android:ellipsize="end"
+        android:maxLines="1"
+        app:layout_constraintEnd_toStartOf="@id/buttonGroup"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"/>
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_marginEnd="12dp"/>
 
-    <!-- Статус -->
+    <TextView
+        android:id="@+id/dateTextView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="15 окт 2024"
+        android:textSize="14sp"
+        android:textColor="@color/text_secondary"
+        android:ellipsize="end"
+        android:maxLines="1"
+        app:layout_constraintEnd_toStartOf="@id/buttonGroup"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/titleTextView"
+        android:layout_marginEnd="12dp"
+        android:layout_marginTop="2dp"/>
+
     <TextView
         android:id="@+id/statusTextView"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="🚗 90 000 км"
-        android:textSize="14sp"
-        android:textColor="@color/text_secondary"
-        app:layout_constraintEnd_toEndOf="@id/titleTextView"
-        app:layout_constraintStart_toStartOf="@id/titleTextView"
-        app:layout_constraintTop_toBottomOf="@id/titleTextView"
-        android:layout_marginTop="4dp"/>
-
-    <!-- Сумма (если есть) -->
-    <TextView
-        android:id="@+id/amountTextView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="~5 400 ₽"
-        android:textSize="14sp"
-        android:textColor="@color/text_secondary"
-        android:visibility="gone"
-        app:layout_constraintEnd_toEndOf="@id/statusTextView"
-        app:layout_constraintTop_toBottomOf="@id/statusTextView"
-        android:layout_marginTop="2dp"/>
-
-    <!-- Выполнено -->
-    <TextView
-        android:id="@+id/completedTextView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="✅"
-        android:textSize="16sp"
-        android:visibility="gone"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"/>
-
-    <!-- Кнопка выполнения -->
-    <Button
-        android:id="@+id/completeButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Выполнить"
+        android:text="Осталось 5 дней"
         android:textSize="12sp"
-        style="@style/Widget.MaterialComponents.Button.TextButton"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/completedTextView"
-        android:layout_marginTop="8dp"/>
+        android:textColor="@color/green"
+        android:ellipsize="end"
+        android:maxLines="1"
+        app:layout_constraintEnd_toStartOf="@id/buttonGroup"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/dateTextView"
+        android:layout_marginEnd="12dp"
+        android:layout_marginTop="1dp"/>
 
+    <!-- Горизонтальная группа кнопок -->
+    <LinearLayout
+        android:id="@+id/buttonGroup"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/divider"
+        android:layout_marginBottom="12dp">
+
+        <TextView
+            android:id="@+id/postponeButton"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:text="⏱"
+            android:textSize="16sp"
+            android:textColor="@color/text_secondary"
+            android:background="@drawable/bg_circle"
+            android:gravity="center"
+            android:layout_marginEnd="6dp"/>
+
+        <TextView
+            android:id="@+id/deleteButton"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:text="✕"
+            android:textSize="16sp"
+            android:textColor="@color/red"
+            android:background="@drawable/bg_circle"
+            android:gravity="center"
+            android:layout_marginEnd="6dp"/>
+
+        <TextView
+            android:id="@+id/completeButton"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:text="✓"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="@color/green"
+            android:background="@drawable/bg_circle"
+            android:gravity="center"/>
+    </LinearLayout>
+
+    <!-- Разделитель с отступом от кнопок -->
+    <View
+        android:id="@+id/divider"
+        android:layout_width="0dp"
+        android:layout_height="0.5dp"
+        android:background="@color/divider"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"/>
 </androidx.constraintlayout.widget.ConstraintLayout>

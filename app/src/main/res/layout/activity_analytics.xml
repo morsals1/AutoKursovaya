@@ -31,28 +31,21 @@
                 app:tint="@color/text_primary"/>
 
             <TextView
+                android:id="@+id/toolbarTitle"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="АНАЛИТИКА • Сентябрь 2026"
+                android:text="АНАЛИТИКА"
                 android:textSize="20sp"
                 android:textStyle="bold"
                 android:textColor="@color/text_primary"
                 android:gravity="center"/>
 
-            <ImageButton
-                android:id="@+id/exportButton"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:src="@drawable/ic_export"
-                android:contentDescription="Экспорт"
-                app:tint="@color/text_primary"/>
-
         </LinearLayout>
 
         <!-- Период -->
         <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/periodLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Период"
@@ -64,17 +57,20 @@
                 android:id="@+id/periodAutoCompleteTextView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Сентябрь 2026"
-                android:inputType="none"/>
+                android:inputType="none"
+                android:padding="10dp"
+                android:text="Текущий месяц"/>
 
         </com.google.android.material.textfield.TextInputLayout>
 
         <!-- Общая статистика -->
         <com.google.android.material.card.MaterialCardView
+            android:id="@+id/statisticsCard"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:cardCornerRadius="12dp"
-            android:layout_marginBottom="16dp">
+            android:layout_marginBottom="16dp"
+            android:visibility="visible">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -95,7 +91,7 @@
                     android:id="@+id/totalExpensesTextView"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="• Всего расходов: 24 850 ₽"
+                    android:text="• Всего расходов: 0 ₽"
                     android:textSize="14sp"
                     android:textColor="@color/text_primary"/>
 
@@ -103,7 +99,7 @@
                     android:id="@+id/averageDailyTextView"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="• Средний день: 828 ₽"
+                    android:text="• Средний день: 0 ₽"
                     android:textSize="14sp"
                     android:textColor="@color/text_primary"
                     android:layout_marginTop="4dp"/>
@@ -112,7 +108,7 @@
                     android:id="@+id/expensePerKmTextView"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="• Расход на 1 км: 5.2 ₽"
+                    android:text="• Расход на 1 км: 0 ₽"
                     android:textSize="14sp"
                     android:textColor="@color/text_primary"
                     android:layout_marginTop="4dp"/>
@@ -122,10 +118,12 @@
 
         <!-- Круговая диаграмма -->
         <com.google.android.material.card.MaterialCardView
+            android:id="@+id/pieChartCard"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:cardCornerRadius="12dp"
-            android:layout_marginBottom="16dp">
+            android:layout_marginBottom="16dp"
+            android:visibility="gone">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -134,18 +132,20 @@
                 android:padding="16dp">
 
                 <TextView
+                    android:id="@+id/pieChartTitle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="─── РАСПРЕДЕЛЕНИЕ ПО КАТЕГОРИЯМ ───"
+                    android:text="РАСПРЕДЕЛЕНИЕ ПО КАТЕГОРИЯМ"
                     android:textSize="14sp"
-                    android:textColor="@color/text_secondary"
+                    android:textColor="@color/text_primary"
                     android:gravity="center"
                     android:layout_marginBottom="16dp"/>
 
                 <com.github.mikephil.charting.charts.PieChart
                     android:id="@+id/pieChart"
                     android:layout_width="match_parent"
-                    android:layout_height="250dp"/>
+                    android:layout_height="250dp"
+                    android:visibility="visible"/>
 
                 <!-- Легенда -->
                 <LinearLayout
@@ -164,10 +164,12 @@
 
         <!-- График по месяцам -->
         <com.google.android.material.card.MaterialCardView
+            android:id="@+id/barChartCard"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:cardCornerRadius="12dp"
-            android:layout_marginBottom="16dp">
+            android:layout_marginBottom="16dp"
+            android:visibility="gone">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -176,9 +178,10 @@
                 android:padding="16dp">
 
                 <TextView
+                    android:id="@+id/barChartTitle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="─── ГРАФИК ПО МЕСЯЦАМ ───"
+                    android:text="ГРАФИК ПО МЕСЯЦАМ (2026)"
                     android:textSize="14sp"
                     android:textColor="@color/text_secondary"
                     android:gravity="center"
@@ -187,35 +190,30 @@
                 <com.github.mikephil.charting.charts.BarChart
                     android:id="@+id/barChart"
                     android:layout_width="match_parent"
-                    android:layout_height="200dp"/>
+                    android:layout_height="200dp"
+                    android:visibility="visible"/>
 
                 <TextView
                     android:id="@+id/monthComparisonTextView"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="СЕНТЯБРЬ: НА 12% МЕНЬШЕ"
-                    android:textSize="14sp"
-                    android:textColor="@color/green"
-                    android:gravity="center"
-                    android:layout_marginTop="12dp"/>
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Чем в августе"
+                    android:text="Нет данных для сравнения"
                     android:textSize="14sp"
                     android:textColor="@color/text_secondary"
-                    android:gravity="center"/>
+                    android:gravity="center"
+                    android:layout_marginTop="12dp"/>
 
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
         <!-- Сезонная аналитика -->
         <com.google.android.material.card.MaterialCardView
+            android:id="@+id/seasonalCard"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:cardCornerRadius="12dp"
-            android:layout_marginBottom="24dp">
+            android:layout_marginBottom="24dp"
+            android:visibility="gone">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -226,7 +224,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="─── СЕЗОННАЯ АНАЛИТИКА ───"
+                    android:text="СЕЗОННАЯ АНАЛИТИКА"
                     android:textSize="14sp"
                     android:textColor="@color/text_secondary"
                     android:gravity="center"
@@ -244,7 +242,7 @@
                     android:id="@+id/winterAverageTextView"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="• Среднемесячно: 18 500 ₽"
+                    android:text="• Среднемесячно: 0 ₽"
                     android:textSize="14sp"
                     android:textColor="@color/text_primary"
                     android:layout_marginTop="4dp"/>
@@ -253,9 +251,9 @@
                     android:id="@+id/seasonComparisonTextView"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="• +22% к летнему периоду"
+                    android:text="• Нет данных для сравнения"
                     android:textSize="14sp"
-                    android:textColor="@color/red"
+                    android:textColor="@color/text_secondary"
                     android:layout_marginTop="4dp"/>
 
                 <TextView
@@ -271,56 +269,22 @@
                     android:id="@+id/summerAverageTextView"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="• Среднемесячно: 15 200 ₽"
+                    android:text="• Среднемесячно: 0 ₽"
                     android:textSize="14sp"
                     android:textColor="@color/text_primary"
                     android:layout_marginTop="4dp"/>
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Основные зимние статьи:"
-                    android:textSize="14sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/text_primary"
-                    android:layout_marginTop="12dp"/>
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="   - Подогрев/отопление"
-                    android:textSize="14sp"
-                    android:textColor="@color/text_primary"
-                    android:layout_marginTop="4dp"/>
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="   - Зимняя резина"
-                    android:textSize="14sp"
-                    android:textColor="@color/text_primary"
-                    android:layout_marginTop="2dp"/>
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="   - Незамерзайка"
-                    android:textSize="14sp"
-                    android:textColor="@color/text_primary"
-                    android:layout_marginTop="2dp"/>
 
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Кнопка экспорта -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/exportExcelButton"
-            android:layout_width="match_parent"
+        <!-- Прогресс-бар для загрузки -->
+        <ProgressBar
+            android:id="@+id/loadingProgressBar"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="📊 Экспорт в Excel"
-            android:textSize="16sp"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-            android:layout_marginBottom="24dp"/>
+            android:layout_gravity="center"
+            android:layout_marginVertical="16dp"
+            android:visibility="gone"/>
 
     </LinearLayout>
 </ScrollView>

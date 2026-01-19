@@ -29,6 +29,22 @@ interface ExpenseDao {
 
     @Query("SELECT category, SUM(amount) as total FROM expenses WHERE carId = :carId AND date BETWEEN :startDate AND :endDate GROUP BY category")
     suspend fun getCategoryTotals(carId: Int, startDate: Long, endDate: Long): List<CategoryTotal>
+
+    // ДОБАВЛЯЕМ НОВЫЕ МЕТОДЫ ДЛЯ ПОЛНОЙ РЕАЛИЗАЦИИ
+    @Query("SELECT * FROM expenses WHERE id = :expenseId")
+    suspend fun getById(expenseId: Int): Expense?
+
+    @Query("DELETE FROM expenses WHERE carId = :carId")
+    suspend fun deleteByCarId(carId: Int)
+
+    @Query("SELECT * FROM expenses WHERE carId = :carId AND category = :category AND date BETWEEN :startDate AND :endDate ORDER BY date DESC")
+    suspend fun getByCategoryAndDateRange(carId: Int, category: String, startDate: Long, endDate: Long): List<Expense>
+
+    @Query("SELECT * FROM expenses WHERE carId = :carId ORDER BY date DESC")
+    suspend fun getAllByCar(carId: Int): List<Expense>
+
+    @Query("SELECT * FROM expenses")
+    suspend fun getAll(): List<Expense>
 }
 
 data class CategoryTotal(

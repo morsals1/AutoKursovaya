@@ -16,11 +16,12 @@ import com.example.autouchet.Models.AppDatabase
 import com.example.autouchet.Models.Car
 import com.example.autouchet.Models.Expense
 import com.example.autouchet.R
+import com.example.autouchet.Utils.SharedPrefsHelper
 import com.example.autouchet.databinding.ActivityMainBinding
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext // ДОБАВЬ ЭТОТ ИМПОРТ
+import kotlinx.coroutines.withContext
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.*
@@ -35,6 +36,9 @@ class MainActivity : AppCompatActivity() {
         maximumFractionDigits = 0
         currency = Currency.getInstance("RUB")
     }
+
+    private val monthFormat = SimpleDateFormat("LLLL yyyy", Locale.getDefault())
+    private val dateFormat = SimpleDateFormat("dd MMM", Locale.getDefault())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -56,13 +60,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupUI() {
-        // Настройка RecyclerView
         binding.recentExpensesRecyclerView.apply {
             layoutManager = LinearLayoutManager(this@MainActivity)
             adapter = expenseAdapter
         }
 
-        // Настройка нижнего меню
         binding.bottomNavigation.selectedItemId = R.id.nav_home
         binding.bottomNavigation.setOnItemSelectedListener { item ->
             when(item.itemId) {
@@ -91,20 +93,49 @@ class MainActivity : AppCompatActivity() {
     private fun loadData() {
         CoroutineScope(Dispatchers.IO).launch {
             val database = AppDatabase.getDatabase(this@MainActivity)
+
+            val currentCarId = SharedPrefsHelper.getCurrentCarId(this@MainActivity)
+
+            if (currentCarId != -1) {
+                val currentCar = database.carDao().getById(currentCarId)
+
+                withContext(Dispatchers.Main) {
+                    if (currentCar != null) {
+                        this@MainActivity.currentCar = currentCar
+                        updateCarInfo()
+                        loadExpenses()
+                        loadStatistics()
+
+                        binding.carInfoCard.visibility = View.VISIBLE
+                        binding.monthStatsCard.visibility = View.VISIBLE
+                        binding.recentExpensesCard.visibility = View.VISIBLE
+                        binding.emptyStateLayout.visibility = View.GONE
+                    } else {
+                        handleNoCurrentCar()
+                    }
+                }
+            } else {
+                handleNoCurrentCar()
+            }
+        }
+    }
+
+    private fun handleNoCurrentCar() {
+        CoroutineScope(Dispatchers.IO).launch {
+            val database = AppDatabase.getDatabase(this@MainActivity)
             val cars = database.carDao().getAll()
 
             withContext(Dispatchers.Main) {
                 if (cars.isNotEmpty()) {
-                    currentCar = cars.first()
-                    updateCarInfo()
-                    loadExpenses()
-                    loadStatistics()
+                    val firstCar = cars.first()
+                    SharedPrefsHelper.setCurrentCarId(this@MainActivity, firstCar.id)
+                    loadData()
                 } else {
-                    // Если нет автомобилей, предлагаем добавить
                     binding.carInfoCard.visibility = View.GONE
                     binding.monthStatsCard.visibility = View.GONE
                     binding.recentExpensesCard.visibility = View.GONE
                     binding.emptyStateLayout.visibility = View.VISIBLE
+
                     binding.addFirstCarButton.setOnClickListener {
                         startActivity(Intent(this@MainActivity, CarSettingsActivity::class.java))
                     }
@@ -140,18 +171,27 @@ class MainActivity : AppCompatActivity() {
                 val previousMonthExpenses = expenseController.getPreviousMonthExpensesSync(car.id)
 
                 withContext(Dispatchers.Main) {
+                    binding.monthTitleTextView.text = monthFormat.format(Date())
+
                     binding.totalExpensesTextView.text = currencyFormat.format(monthlyExpenses ?: 0.0)
 
-                    // Расчет экономии
                     val economy = (previousMonthExpenses ?: 0.0) - (monthlyExpenses ?: 0.0)
-                    binding.economyTextView.text = currencyFormat.format(economy)
-                    if (economy > 0) {
-                        binding.economyTextView.setTextColor(getColor(R.color.green))
+                    val economyText = if (economy > 0) {
+                        "🏆 ЭКОНОМИЯ: +${currencyFormat.format(economy)}"
+                    } else if (economy < 0) {
+                        "📈 ПЕРЕРАСХОД: ${currencyFormat.format(-economy)}"
                     } else {
-                        binding.economyTextView.setTextColor(getColor(R.color.red))
+                        "⚖ В ПРЕДЕЛАХ НОРМЫ"
                     }
 
-                    // Процент изменения
+                    binding.economyTextView.text = economyText
+
+                    binding.economyTextView.setTextColor(
+                        if (economy > 0) getColor(R.color.green)
+                        else if (economy < 0) getColor(R.color.red)
+                        else getColor(R.color.text_secondary)
+                    )
+
                     if ((previousMonthExpenses ?: 0.0) > 0) {
                         val percentChange = (((monthlyExpenses ?: 0.0) - (previousMonthExpenses ?: 0.0)) / (previousMonthExpenses ?: 1.0) * 100).toInt()
                         binding.monthComparisonTextView.text = if (percentChange > 0) {
@@ -159,6 +199,13 @@ class MainActivity : AppCompatActivity() {
                         } else {
                             "▼${-percentChange}% к прошлому месяцу"
                         }
+                        binding.monthComparisonTextView.setTextColor(
+                            if (percentChange > 0) getColor(R.color.red)
+                            else getColor(R.color.green)
+                        )
+                    } else {
+                        binding.monthComparisonTextView.text = "Нет данных за прошлый месяц"
+                        binding.monthComparisonTextView.setTextColor(getColor(R.color.text_secondary))
                     }
                 }
             }
@@ -171,14 +218,25 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.showAllExpensesButton.setOnClickListener {
-            // В полной версии здесь будет переход к полному списку
+            currentCar?.let { car ->
+                val intent = Intent(this, ExpensesListActivity::class.java).apply {
+                    putExtra("car_id", car.id)
+                }
+                startActivity(intent)
+            } ?: run {
+                android.widget.Toast.makeText(
+                    this,
+                    "Сначала добавьте автомобиль",
+                    android.widget.Toast.LENGTH_SHORT
+                ).show()
+            }
         }
     }
 
     private fun checkReminders() {
         currentCar?.let { car ->
             CoroutineScope(Dispatchers.IO).launch {
-                // notificationManager.checkMileageReminders(car.id) // Пока закомментируй
+                notificationManager.checkMileageReminders(car.id)
             }
         }
     }
@@ -201,7 +259,7 @@ class MainActivity : AppCompatActivity() {
     inner class ExpenseViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         fun bind(expense: Expense) {
             itemView.findViewById<TextView>(R.id.dateTextView).text =
-                SimpleDateFormat("dd MMM", Locale.getDefault()).format(expense.date)
+                dateFormat.format(expense.date)
             itemView.findViewById<TextView>(R.id.categoryTextView).text =
                 "${expense.getCategoryIcon()} ${expense.category}"
             itemView.findViewById<TextView>(R.id.amountTextView).text =
@@ -215,7 +273,10 @@ class MainActivity : AppCompatActivity() {
             }
 
             itemView.setOnClickListener {
-                // В полной версии здесь будет переход к деталям расхода
+                val intent = Intent(itemView.context, ExpenseDetailActivity::class.java).apply {
+                    putExtra("expense_id", expense.id)
+                }
+                itemView.context.startActivity(intent)
             }
         }
     }

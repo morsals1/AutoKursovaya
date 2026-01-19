@@ -22,7 +22,7 @@ class ExpenseController(private val context: Context) {
         comment: String = "",
         shopName: String = "",
         isFromReceipt: Boolean = false,
-        onComplete: (Long) -> Unit = {}
+        onComplete: (Int) -> Unit = {} // Изменено на Int
     ) {
         CoroutineScope(Dispatchers.IO).launch {
             val expense = Expense(
@@ -36,7 +36,7 @@ class ExpenseController(private val context: Context) {
                 createdByReceipt = isFromReceipt
             )
 
-            val expenseId = database.expenseDao().insert(expense)
+            val expenseId = database.expenseDao().insert(expense).toInt() // Конвертируем в Int
 
             // Обновляем пробег автомобиля
             val car = database.carDao().getById(carId)
@@ -47,7 +47,7 @@ class ExpenseController(private val context: Context) {
                 }
             }
 
-            CoroutineScope(Dispatchers.Main).launch {
+            withContext(Dispatchers.Main) {
                 onComplete(expenseId)
             }
         }
@@ -60,7 +60,7 @@ class ExpenseController(private val context: Context) {
     ) {
         CoroutineScope(Dispatchers.IO).launch {
             val expenses = database.expenseDao().getRecentByCar(carId, limit)
-            CoroutineScope(Dispatchers.Main).launch {
+            withContext(Dispatchers.Main) {
                 onResult(expenses)
             }
         }
@@ -91,7 +91,7 @@ class ExpenseController(private val context: Context) {
         CoroutineScope(Dispatchers.IO).launch {
             val (startDate, endDate) = getMonthRange()
             val total = database.expenseDao().getTotalByDateRange(carId, startDate, endDate)
-            CoroutineScope(Dispatchers.Main).launch {
+            withContext(Dispatchers.Main) {
                 onResult(total)
             }
         }
@@ -104,7 +104,7 @@ class ExpenseController(private val context: Context) {
         CoroutineScope(Dispatchers.IO).launch {
             val (startDate, endDate) = getMonthRange(-1)
             val total = database.expenseDao().getTotalByDateRange(carId, startDate, endDate)
-            CoroutineScope(Dispatchers.Main).launch {
+            withContext(Dispatchers.Main) {
                 onResult(total)
             }
         }
@@ -117,7 +117,7 @@ class ExpenseController(private val context: Context) {
         CoroutineScope(Dispatchers.IO).launch {
             val (startDate, endDate) = getMonthRange()
             val totals = database.expenseDao().getCategoryTotals(carId, startDate, endDate)
-            CoroutineScope(Dispatchers.Main).launch {
+            withContext(Dispatchers.Main) {
                 onResult(totals)
             }
         }
@@ -131,7 +131,7 @@ class ExpenseController(private val context: Context) {
         CoroutineScope(Dispatchers.IO).launch {
             val (startDate, endDate) = getMonthRange(monthOffset)
             val expenses = database.expenseDao().getByDateRange(carId, startDate, endDate)
-            CoroutineScope(Dispatchers.Main).launch {
+            withContext(Dispatchers.Main) {
                 onResult(expenses)
             }
         }
@@ -155,6 +155,51 @@ class ExpenseController(private val context: Context) {
         return withContext(Dispatchers.IO) {
             val (startDate, endDate) = getMonthRange()
             database.expenseDao().getCategoryTotals(carId, startDate, endDate)
+        }
+    }
+
+    // НОВЫЕ МЕТОДЫ ДЛЯ ПОЛНОЙ РЕАЛИЗАЦИИ
+
+    suspend fun getExpensesForMonthSync(carId: Int, year: Int, month: Int): List<Expense> {
+        return withContext(Dispatchers.IO) {
+            // Создаем диапазон дат для месяца
+            val calendar = Calendar.getInstance().apply {
+                set(Calendar.YEAR, year)
+                set(Calendar.MONTH, month - 1) // месяц в Calendar начинается с 0
+                set(Calendar.DAY_OF_MONTH, 1)
+                set(Calendar.HOUR_OF_DAY, 0)
+                set(Calendar.MINUTE, 0)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+            }
+            val startDate = calendar.timeInMillis
+
+            calendar.add(Calendar.MONTH, 1)
+            calendar.add(Calendar.MILLISECOND, -1)
+            val endDate = calendar.timeInMillis
+
+            database.expenseDao().getByDateRange(carId, startDate, endDate)
+        }
+    }
+
+    suspend fun deleteExpense(expenseId: Int) {
+        withContext(Dispatchers.IO) {
+            val expense = database.expenseDao().getById(expenseId)
+            expense?.let {
+                database.expenseDao().delete(it)
+            }
+        }
+    }
+
+    suspend fun getExpenseById(expenseId: Int): Expense? {
+        return withContext(Dispatchers.IO) {
+            database.expenseDao().getById(expenseId)
+        }
+    }
+
+    suspend fun getAllExpensesByCarSync(carId: Int): List<Expense> {
+        return withContext(Dispatchers.IO) {
+            database.expenseDao().getAllByCar(carId)
         }
     }
 }

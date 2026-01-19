@@ -29,6 +29,7 @@
                 android:contentDescription="Назад"/>
 
             <TextView
+                android:id="@+id/toolbarTitle"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -150,121 +151,6 @@
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
-        <!-- Для расчёта налога -->
-        <androidx.cardview.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:cardCornerRadius="12dp"
-            android:layout_marginBottom="16dp"
-            app:cardElevation="4dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="─── ДЛЯ РАСЧЁТА НАЛОГА ───"
-                    android:textSize="14sp"
-                    android:textColor="@android:color/darker_gray"
-                    android:gravity="center"
-                    android:layout_marginBottom="16dp"/>
-
-                <!-- Мощность -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:layout_marginBottom="12dp">
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="Мощность (л.с.)"
-                        android:textSize="14sp"
-                        android:textColor="@android:color/darker_gray"
-                        android:layout_marginBottom="4dp"/>
-
-                    <EditText
-                        android:id="@+id/horsepowerEditText"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:hint="Например: 150"
-                        android:inputType="number"
-                        android:padding="12dp"
-                        android:background="@drawable/bg_edittext"/>
-
-                </LinearLayout>
-
-                <!-- Регион -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:layout_marginBottom="16dp">
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="Регион регистрации"
-                        android:textSize="14sp"
-                        android:textColor="@android:color/darker_gray"
-                        android:layout_marginBottom="4dp"/>
-
-                    <AutoCompleteTextView
-                        android:id="@+id/regionAutoCompleteTextView"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:hint="Выберите регион"
-                        android:padding="12dp"
-                        android:background="@drawable/bg_edittext"/>
-
-                </LinearLayout>
-
-                <!-- Кнопка расчёта -->
-                <Button
-                    android:id="@+id/calculateTaxButton"
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:text="РАССЧИТАТЬ НАЛОГ"
-                    android:textSize="14sp"
-                    android:textStyle="bold"
-                    android:backgroundTint="@color/primary"
-                    android:layout_marginBottom="16dp"/>
-
-                <!-- Результаты расчёта -->
-                <TextView
-                    android:id="@+id/taxRateTextView"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Ставка в регионе: 35 ₽/л.с."
-                    android:textSize="14sp"
-                    android:textColor="@android:color/black"/>
-
-                <TextView
-                    android:id="@+id/yearlyTaxTextView"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Годовой налог: 5 250 ₽"
-                    android:textSize="14sp"
-                    android:textColor="@android:color/black"
-                    android:layout_marginTop="4dp"/>
-
-                <TextView
-                    android:id="@+id/monthlyTaxTextView"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Ежемесячно: 438 ₽"
-                    android:textSize="14sp"
-                    android:textColor="@android:color/black"
-                    android:layout_marginTop="4dp"/>
-
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
-
         <!-- Текущие данные -->
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
@@ -282,7 +168,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="─── ТЕКУЩИЕ ДАННЫЕ ───"
+                    android:text="ТЕКУЩИЕ ДАННЫЕ"
                     android:textSize="14sp"
                     android:textColor="@android:color/darker_gray"
                     android:gravity="center"
@@ -342,7 +228,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="─── УПРАВЛЕНИЕ ───"
+                    android:text="УПРАВЛЕНИЕ"
                     android:textSize="14sp"
                     android:textColor="@android:color/darker_gray"
                     android:gravity="center"

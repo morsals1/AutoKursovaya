@@ -13,14 +13,14 @@ data class Reminder(
     val type: String, // "date", "mileage", "periodic"
     val targetDate: Date? = null,
     val targetMileage: Int? = null,
-    val amount: Double? = null,
     val periodMonths: Int? = null,
     val isCompleted: Boolean = false,
     val completedDate: Date? = null,
     val completedMileage: Int? = null,
     val createdDate: Date = Date(),
     val notifyDaysBefore: Int = 7,
-    val notifyKmBefore: Int = 500
+    val notifyKmBefore: Int = 500,
+    val note: String = "" // УБЕРИТЕ amount, оно не нужно для напоминаний
 ) {
     fun getStatus(currentMileage: Int, currentDate: Date): String {
         if (isCompleted) return "Выполнено"
@@ -40,7 +40,11 @@ data class Reminder(
                     else "Просрочено ${-kmLeft} км"
                 } ?: "Нет пробега"
             }
-            else -> "Активно"
+            "periodic" -> {
+                if (periodMonths != null) "Повтор каждые $periodMonths мес."
+                else "Периодическое"
+            }
+            else -> "Неизвестный тип"
         }
     }
 }

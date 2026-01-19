@@ -5,24 +5,44 @@
     <!-- Разрешения -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.CAMERA" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
-        android:maxSdkVersion="28" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.SET_ALARM" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="com.android.alarm.permission.SET_ALARM" />
 
-    <!-- Фичи камеры -->
-    <uses-feature android:name="android.hardware.camera" android:required="false" />
-    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.camera.autofocus"
+        android:required="false" />
 
     <application
         android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@drawable/ic_car"
         android:label="АвтоУчёт"
-        android:theme="@style/Theme.MaterialComponents.Light.NoActionBar"
         android:supportsRtl="true"
+        android:theme="@style/Theme.MaterialComponents.Light.NoActionBar"
         tools:targetApi="31">
 
-        <!-- Main Activity -->
+        <!-- Activities -->
+        <activity
+            android:name=".Views.TiresActivity"
+            android:exported="false" />
+        <activity
+            android:name=".Views.ExpenseDetailActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".Views.ExpensesListActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
         <activity
             android:name=".Views.MainActivity"
             android:exported="true"
@@ -32,30 +52,66 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <!-- Add Expense Activity -->
         <activity
             android:name=".Views.AddExpenseActivity"
             android:exported="false"
             android:screenOrientation="portrait" />
-
-        <!-- Analytics Activity -->
         <activity
             android:name=".Views.AnalyticsActivity"
             android:exported="false"
             android:screenOrientation="portrait" />
-
-        <!-- Car Settings Activity -->
         <activity
             android:name=".Views.CarSettingsActivity"
             android:exported="false"
             android:screenOrientation="portrait" />
-
-        <!-- Reminders Activity -->
         <activity
             android:name=".Views.RemindersActivity"
             android:exported="false"
             android:screenOrientation="portrait" />
+
+        <!-- ReminderReceiver с правильными intent-фильтрами -->
+        <receiver
+            android:name=".Receivers.ReminderReceiver"
+            android:enabled="true"
+            android:exported="false"
+            android:permission="android.permission.RECEIVE_BOOT_COMPLETED">
+            <intent-filter>
+                <action android:name="SHOW_REMINDER" />
+                <action android:name="CHECK_MILEAGE" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="com.htc.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="android.intent.action.REBOOT" />
+            </intent-filter>
+        </receiver>
+
+        <!-- RestartReceiver для перепланирования после перезагрузки -->
+        <receiver
+            android:name=".Receivers.RestartReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Service для работы в фоне -->
+        <service
+            android:name=".Services.ReminderService"
+            android:enabled="true"
+            android:exported="false" />
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
 
     </application>
 

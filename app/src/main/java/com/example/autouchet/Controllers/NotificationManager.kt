@@ -13,7 +13,7 @@ import java.util.*
 
 class NotificationManager(private val context: Context) {
     private val channelId = "autouchet_reminders"
-    private val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+    private val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
 
     init {
         createNotificationChannel()
@@ -34,7 +34,7 @@ class NotificationManager(private val context: Context) {
 
     fun showReminderNotification(title: String, message: String) {
         val notification = NotificationCompat.Builder(context, channelId)
-            .setSmallIcon(R.drawable.ic_car)
+            .setSmallIcon(R.drawable.ic_car) // Убедитесь что есть иконка ic_car
             .setContentTitle(title)
             .setContentText(message)
             .setPriority(NotificationCompat.PRIORITY_HIGH)

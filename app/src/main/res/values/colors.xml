@@ -42,6 +42,11 @@
     <color name="blue">#2196F3</color>
     <color name="purple">#9C27B0</color>
     <color name="yellow">#FFEB3B</color>
+    <color name="brown">#964B00</color>
+    <color name="cyan">#00ffff</color>
+    <color name="gray">#808080</color>
+    <color name="black">#000000</color>
+
 
     <!-- Градиенты -->
     <color name="gradient_start">#2196F3</color>

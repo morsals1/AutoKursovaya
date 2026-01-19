@@ -7,12 +7,16 @@
     android:layout_height="match_parent"
     android:background="@color/background">
 
+
     <!-- Верхняя панель с автомобилем -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/carInfoCard"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_margin="16dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="4dp"
         app:cardCornerRadius="12dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -45,6 +49,7 @@
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
+
     <!-- Статистика месяца -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/monthStatsCard"
@@ -53,6 +58,7 @@
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
         android:layout_marginTop="8dp"
+        android:layout_marginBottom="4dp"
         app:cardCornerRadius="12dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -64,7 +70,9 @@
             android:orientation="vertical"
             android:padding="16dp">
 
+            <!-- ДОБАВЛЯЕМ ID ДЛЯ МЕСЯЦА -->
             <TextView
+                android:id="@+id/monthTitleTextView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Сентябрь 2026"
@@ -133,7 +141,7 @@
                 android:id="@+id/recentExpensesTitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="─── ПОСЛЕДНИЕ ОПЕРАЦИИ ───"
+                android:text="ПОСЛЕДНИЕ ОПЕРАЦИИ"
                 android:textSize="14sp"
                 android:textColor="@color/text_secondary"
                 android:gravity="center"

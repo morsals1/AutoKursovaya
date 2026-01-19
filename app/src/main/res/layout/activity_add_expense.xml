@@ -31,6 +31,7 @@
                 app:tint="@color/text_primary"/>
 
             <TextView
+                android:id="@+id/toolbarTitle"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -43,380 +44,333 @@
             <Space
                 android:layout_width="48dp"
                 android:layout_height="48dp"/>
-
         </LinearLayout>
 
-        <!-- Выбор способа ввода -->
-        <TextView
+        <!-- Сумма -->
+        <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Способ добавления:"
-            android:textSize="16sp"
-            android:textColor="@color/text_secondary"
-            android:layout_marginBottom="8dp"/>
+            android:hint="Сумма"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            app:endIconMode="clear_text"
+            app:endIconDrawable="@drawable/ic_clear"
+            android:layout_marginBottom="16dp">
 
-        <com.google.android.material.button.MaterialButtonToggleGroup
-            android:id="@+id/inputMethodToggleGroup"
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/amountEditText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="numberDecimal"
+                android:imeOptions="actionNext"/>
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Категория -->
+        <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp"
-            app:singleSelection="true">
+            android:hint="Категория"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            app:endIconMode="dropdown_menu"
+            android:layout_marginBottom="16dp">
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/manualInputButton"
-                android:layout_width="0dp"
+            <AutoCompleteTextView
+                android:id="@+id/categoryAutoCompleteTextView"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Вручную"
-                android:checked="true"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"/>
+                android:inputType="none"
+                android:padding="10dp"
+                android:imeOptions="actionNext"/>
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/receiptInputButton"
-                android:layout_width="0dp"
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Дата -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Дата"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            app:endIconMode="custom"
+            app:endIconDrawable="@drawable/ic_calendar"
+            android:layout_marginBottom="16dp">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/dateEditText"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Чек"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"/>
+                android:inputType="date"
+                android:focusable="false"
+                android:clickable="true"
+                android:imeOptions="actionNext"/>
 
-        </com.google.android.material.button.MaterialButtonToggleGroup>
+        </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Ручной ввод -->
+        <!-- Пробег -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Пробег"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            app:endIconMode="custom"
+            app:endIconDrawable="@drawable/ic_edit"
+            android:layout_marginBottom="16dp">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/mileageEditText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="number"
+                android:imeOptions="actionNext"/>
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Магазин -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Магазин (необязательно)"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            app:endIconMode="clear_text"
+            android:layout_marginBottom="16dp">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/shopNameEditText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:imeOptions="actionNext"/>
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Комментарий -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Комментарий (необязательно)"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            app:endIconMode="clear_text"
+            android:layout_marginBottom="16dp">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/commentEditText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:lines="3"
+                android:maxLines="3"/>
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Шаблон для шин -->
         <LinearLayout
-            android:id="@+id/manualInputLayout"
+            android:id="@+id/tireTemplateLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:visibility="visible">
+            android:visibility="gone"
+            android:background="@drawable/bg_outline"
+            android:padding="16dp"
+            android:layout_marginBottom="16dp">
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="─── РУЧНОЙ ВВОД ───"
-                android:textSize="14sp"
-                android:textColor="@color/text_secondary"
-                android:gravity="center"
-                android:layout_marginBottom="16dp"/>
+                android:text="Информация о шинах"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary"
+                android:layout_marginBottom="12dp"/>
 
-            <!-- Сумма -->
+            <!-- Тип резины -->
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Сумма"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                app:endIconMode="clear_text"
-                app:endIconDrawable="@drawable/ic_clear"
-                android:layout_marginBottom="16dp">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/amountEditText"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:inputType="numberDecimal"
-                    android:imeOptions="actionNext"/>
-
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <!-- Категория -->
-            <com.google.android.material.textfield.TextInputLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Категория"
+                android:hint="Тип резины"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 app:endIconMode="dropdown_menu"
-                android:layout_marginBottom="16dp">
+                android:layout_marginBottom="12dp">
 
                 <AutoCompleteTextView
-                    android:id="@+id/categoryAutoCompleteTextView"
+                    android:id="@+id/tireTypeAutoCompleteTextView"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="none"
-                    android:imeOptions="actionNext"/>
+                    android:padding="10dp"
+                    android:inputType="none"/>
 
             </com.google.android.material.textfield.TextInputLayout>
 
-            <!-- Дата -->
+            <!-- Марка шин -->
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Дата"
+                android:hint="Марка (например: Michelin)"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                app:endIconMode="custom"
-                app:endIconDrawable="@drawable/ic_calendar"
-                android:layout_marginBottom="16dp">
+                android:layout_marginBottom="12dp">
 
                 <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/dateEditText"
+                    android:id="@+id/tireBrandEditText"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:inputType="date"
-                    android:imeOptions="actionNext"/>
+                    android:layout_height="wrap_content"/>
 
             </com.google.android.material.textfield.TextInputLayout>
 
-            <!-- Пробег -->
+            <!-- Модель шин -->
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Пробег"
+                android:hint="Модель (необязательно)"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                app:endIconMode="custom"
-                app:endIconDrawable="@drawable/ic_edit"
-                android:layout_marginBottom="16dp">
+                android:layout_marginBottom="12dp">
 
                 <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/mileageEditText"
+                    android:id="@+id/tireModelEditText"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:inputType="number"
-                    android:imeOptions="actionNext"/>
+                    android:layout_height="wrap_content"/>
 
             </com.google.android.material.textfield.TextInputLayout>
 
-            <!-- Магазин -->
+            <!-- Размер шин -->
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Магазин (необязательно)"
+                android:hint="Размер (например: 195/65 R15)"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                app:endIconMode="clear_text"
-                android:layout_marginBottom="16dp">
+                android:layout_marginBottom="12dp">
 
                 <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/shopNameEditText"
+                    android:id="@+id/tireSizeEditText"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:imeOptions="actionNext"/>
+                    android:layout_height="wrap_content"/>
 
             </com.google.android.material.textfield.TextInputLayout>
 
-            <!-- Комментарий -->
-            <com.google.android.material.textfield.TextInputLayout
+            <!-- Срок службы шин -->
+            <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Комментарий (необязательно)"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                app:endIconMode="clear_text"
-                android:layout_marginBottom="16dp">
+                android:text="Ожидаемый срок службы:"
+                android:textSize="14sp"
+                android:textColor="@color/text_secondary"
+                android:layout_marginBottom="8dp"/>
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/commentEditText"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:lines="3"
-                    android:maxLines="3"/>
-
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <!-- Шаблон для шин -->
             <LinearLayout
-                android:id="@+id/tireTemplateLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="16dp">
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:hint="Лет"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    android:layout_marginEnd="8dp">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/tireExpectedYearsEditText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="number"
+                        android:text="4"/>
+
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:hint="Км"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    android:layout_marginStart="8dp">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/tireExpectedKmEditText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="number"
+                        android:text="60000"/>
+
+                </com.google.android.material.textfield.TextInputLayout>
+            </LinearLayout>
+
+            <!-- Создать напоминание -->
+            <com.google.android.material.checkbox.MaterialCheckBox
+                android:id="@+id/createReminderCheckBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Создать напоминание о следующей замене"
+                android:textSize="14sp"/>
+
+            <LinearLayout
+                android:id="@+id/reminderLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:visibility="gone"
-                android:background="@drawable/bg_outline"
-                android:padding="16dp"
-                android:layout_marginBottom="16dp">
+                android:layout_marginTop="8dp"
+                android:paddingStart="32dp">
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Настройки шин"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/text_primary"
-                    android:layout_marginBottom="12dp"/>
-
-                <!-- Тип резины -->
-                <com.google.android.material.textfield.TextInputLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="Тип резины"
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                    app:endIconMode="dropdown_menu"
-                    android:layout_marginBottom="12dp">
-
-                    <AutoCompleteTextView
-                        android:id="@+id/tireTypeAutoCompleteTextView"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:inputType="none"/>
-
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <!-- Создать напоминание -->
-                <com.google.android.material.checkbox.MaterialCheckBox
-                    android:id="@+id/createReminderCheckBox"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Создать напоминание о следующей замене"
-                    android:textSize="14sp"/>
-
-                <LinearLayout
-                    android:id="@+id/reminderLayout"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:visibility="gone"
-                    android:layout_marginTop="8dp"
-                    android:paddingStart="32dp">
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="Напомнить через:"
-                        android:textSize="14sp"
-                        android:textColor="@color/text_secondary"
-                        android:layout_marginBottom="4dp"/>
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal">
-
-                        <EditText
-                            android:id="@+id/reminderYearsEditText"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:hint="2"
-                            android:inputType="number"
-                            android:background="@drawable/bg_edittext"/>
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="лет или"
-                            android:textSize="14sp"
-                            android:textColor="@color/text_secondary"
-                            android:layout_marginStart="8dp"
-                            android:layout_marginEnd="8dp"
-                            android:gravity="center_vertical"/>
-
-                        <EditText
-                            android:id="@+id/reminderKmEditText"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:hint="40000"
-                            android:inputType="number"
-                            android:background="@drawable/bg_edittext"/>
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="км"
-                            android:textSize="14sp"
-                            android:textColor="@color/text_secondary"
-                            android:layout_marginStart="8dp"
-                            android:gravity="center_vertical"/>
-
-                    </LinearLayout>
-                </LinearLayout>
-
-            </LinearLayout>
-
-            <!-- Кнопка сохранения -->
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/saveButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="СОХРАНИТЬ"
-                android:textSize="16sp"
-                style="@style/Widget.MaterialComponents.Button"
-                android:layout_marginTop="8dp"/>
-
-        </LinearLayout>
-
-        <!-- Сканирование чека -->
-        <LinearLayout
-            android:id="@+id/receiptInputLayout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:visibility="gone">
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="─── СКАНИРОВАНИЕ ЧЕКА ───"
-                android:textSize="14sp"
-                android:textColor="@color/text_secondary"
-                android:gravity="center"
-                android:layout_marginBottom="24dp"/>
-
-            <ImageView
-                android:layout_width="120dp"
-                android:layout_height="120dp"
-                android:src="@drawable/ic_qr_code"
-                android:layout_gravity="center"
-                android:contentDescription="QR код"
-                android:layout_marginBottom="24dp"/>
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Наведите камеру на QR-код на чеке"
-                android:textSize="16sp"
-                android:textColor="@color/text_primary"
-                android:gravity="center"
-                android:layout_marginBottom="32dp"/>
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/scanReceiptButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="📷 ОТКРЫТЬ КАМЕРУ"
-                android:textSize="16sp"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                android:layout_marginBottom="32dp"/>
-
-            <!-- Результат сканирования -->
-            <LinearLayout
-                android:id="@+id/scanResultLayout"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:background="@drawable/bg_outline"
-                android:padding="16dp"
-                android:visibility="gone">
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="*Распознано автоматически:"
+                    android:text="Напомнить через:"
                     android:textSize="14sp"
                     android:textColor="@color/text_secondary"
-                    android:layout_marginBottom="8dp"/>
+                    android:layout_marginBottom="4dp"/>
 
-                <TextView
-                    android:id="@+id/scanAmountTextView"
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="• Сумма: 3 200 ₽"
-                    android:textSize="14sp"
-                    android:textColor="@color/text_primary"/>
+                    android:orientation="horizontal">
 
-                <TextView
-                    android:id="@+id/scanCategoryTextView"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="• Категория: Топливо"
-                    android:textSize="14sp"
-                    android:textColor="@color/text_primary"/>
+                    <EditText
+                        android:id="@+id/reminderYearsEditText"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:hint="2"
+                        android:inputType="number"
+                        android:background="@drawable/bg_edittext"/>
 
-                <TextView
-                    android:id="@+id/scanShopTextView"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="• Магазин: Лукойл"
-                    android:textSize="14sp"
-                    android:textColor="@color/text_primary"/>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="лет или"
+                        android:textSize="14sp"
+                        android:textColor="@color/text_secondary"
+                        android:layout_marginStart="8dp"
+                        android:layout_marginEnd="8dp"
+                        android:gravity="center_vertical"/>
 
+                    <EditText
+                        android:id="@+id/reminderKmEditText"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:hint="40000"
+                        android:inputType="number"
+                        android:background="@drawable/bg_edittext"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="км"
+                        android:textSize="14sp"
+                        android:textColor="@color/text_secondary"
+                        android:layout_marginStart="8dp"
+                        android:gravity="center_vertical"/>
+                </LinearLayout>
             </LinearLayout>
-
         </LinearLayout>
+
+        <!-- Кнопка сохранения -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/saveButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="СОХРАНИТЬ"
+            android:textSize="16sp"
+            style="@style/Widget.MaterialComponents.Button"
+            android:layout_marginTop="8dp"/>
 
     </LinearLayout>
 </ScrollView>
