@@ -29,7 +29,8 @@ data class TireReplacement(
     val expectedLifetimeYears: Int = 4,
     val expectedLifetimeKm: Int = 60000,
     val notes: String = "",
-    val isActive: Boolean = true // Активны ли сейчас эти шины на автомобиле
+    val isActive: Boolean = true,
+    val expenseId: Int? = null
 ) {
     fun needsReplacement(currentDate: Date, currentMileage: Int): Pair<Boolean, String> {
         val daysPassed = (currentDate.time - installationDate.time) / (1000L * 60 * 60 * 24)

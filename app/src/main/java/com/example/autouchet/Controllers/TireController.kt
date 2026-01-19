@@ -21,13 +21,27 @@ class TireController(private val context: Context) {
         price: Double,
         expectedLifetimeYears: Int = 4,
         expectedLifetimeKm: Int = 60000,
-        notes: String = ""
+        notes: String = "",
+        replaceAllTires: Boolean = false
     ): Long {
         return CoroutineScope(Dispatchers.IO).run {
             val database = AppDatabase.getDatabase(context)
 
-            // Деактивируем старые шины такого же типа
-            database.tireReplacementDao().deactivateAllTires(carId)
+            if (replaceAllTires) {
+                // Деактивируем ВСЕ активные шины
+                val activeTires = database.tireReplacementDao().getByCar(carId)
+                    .filter { it.isActive }
+                activeTires.forEach { tire ->
+                    database.tireReplacementDao().update(tire.copy(isActive = false))
+                }
+            } else {
+                // Деактивируем только шины такого же типа
+                val oldTires = database.tireReplacementDao().getByCar(carId)
+                    .filter { it.isActive && it.tireType == tireType }
+                oldTires.forEach { oldTire ->
+                    database.tireReplacementDao().update(oldTire.copy(isActive = false))
+                }
+            }
 
             // Создаем новую запись
             val tire = TireReplacement(
@@ -52,7 +66,7 @@ class TireController(private val context: Context) {
     suspend fun getActiveTires(carId: Int): List<TireReplacement> {
         return CoroutineScope(Dispatchers.IO).run {
             val database = AppDatabase.getDatabase(context)
-            database.tireReplacementDao().getActiveTires(carId)
+            database.tireReplacementDao().getByCar(carId).filter { it.isActive }
         }
     }
 

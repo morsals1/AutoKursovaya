@@ -113,11 +113,16 @@ class CarSettingsActivity : AppCompatActivity() {
             return
         }
 
-        if (mileage == null || mileage < 0) {
-            Toast.makeText(this, "Введите корректный пробег", Toast.LENGTH_SHORT).show()
+        if (mileage == null || mileage < 0 || mileage > 9999999) {
+            Toast.makeText(
+                this,
+                if (mileage == null) "Введите корректный пробег"
+                else if (mileage < 0) "Пробег не может быть отрицательным"
+                else "Пробег не может превышать 10 000 000 км",
+                Toast.LENGTH_SHORT
+            ).show()
             return
         }
-
         // Устанавливаем мощность по умолчанию 0, так как поля больше нет
         val horsepower = 0
 
@@ -281,9 +286,6 @@ class CarSettingsActivity : AppCompatActivity() {
                     AlertDialog.Builder(this@CarSettingsActivity)
                         .setTitle("Экспорт завершен")
                         .setMessage("Файл сохранен в папку Загрузки. Хотите поделиться им?")
-                        .setPositiveButton("Поделиться") { _, _ ->
-                            shareFile(file)
-                        }
                         .setNegativeButton("Открыть папку") { _, _ ->
                             openDownloadsFolder()
                         }
