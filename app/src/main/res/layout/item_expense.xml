@@ -7,7 +7,6 @@
     android:padding="16dp"
     android:background="?attr/selectableItemBackground">
 
-    <!-- Дата -->
     <TextView
         android:id="@+id/dateTextView"
         android:layout_width="wrap_content"
@@ -18,7 +17,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"/>
 
-    <!-- Категория с иконкой -->
     <LinearLayout
         android:id="@+id/categoryLayout"
         android:layout_width="0dp"
@@ -47,7 +45,6 @@
 
     </LinearLayout>
 
-    <!-- Сумма -->
     <TextView
         android:id="@+id/amountTextView"
         android:layout_width="wrap_content"
@@ -59,7 +56,6 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"/>
 
-    <!-- Комментарий -->
     <TextView
         android:id="@+id/commentTextView"
         android:layout_width="0dp"
@@ -74,7 +70,6 @@
         app:layout_constraintTop_toBottomOf="@id/categoryLayout"
         android:layout_marginTop="2dp"/>
 
-    <!-- Разделитель -->
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"

@@ -17,7 +17,6 @@ interface ExpenseDao {
     @Query("SELECT * FROM expenses WHERE carId = :carId ORDER BY date DESC LIMIT :limit")
     fun getRecentByCarFlow(carId: Int, limit: Int = 10): Flow<List<Expense>>
 
-    // Синхронная версия для прямого доступа
     @Query("SELECT * FROM expenses WHERE carId = :carId ORDER BY date DESC LIMIT :limit")
     suspend fun getRecentByCar(carId: Int, limit: Int = 10): List<Expense>
 
@@ -30,7 +29,6 @@ interface ExpenseDao {
     @Query("SELECT category, SUM(amount) as total FROM expenses WHERE carId = :carId AND date BETWEEN :startDate AND :endDate GROUP BY category")
     suspend fun getCategoryTotals(carId: Int, startDate: Long, endDate: Long): List<CategoryTotal>
 
-    // ДОБАВЛЯЕМ НОВЫЕ МЕТОДЫ ДЛЯ ПОЛНОЙ РЕАЛИЗАЦИИ
     @Query("SELECT * FROM expenses WHERE id = :expenseId")
     suspend fun getById(expenseId: Int): Expense?
 

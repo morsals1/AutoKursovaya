@@ -56,7 +56,6 @@ class ExpenseDetailActivity : AppCompatActivity() {
         }
 
         binding.editButton.setOnClickListener {
-            // Редактирование расхода
             val intent = Intent(this, com.example.autouchet.Views.AddExpenseActivity::class.java).apply {
                 putExtra("edit_mode", true)
                 putExtra("expense_id", expenseId)
@@ -79,8 +78,6 @@ class ExpenseDetailActivity : AppCompatActivity() {
             expense?.let {
                 withContext(Dispatchers.Main) {
                     displayExpenseData(it)
-
-                    // Если это шины, загружаем дополнительную информацию
                     if (it.category == "Шины") {
                         loadTireInfo(expenseId)
                     }
@@ -97,8 +94,6 @@ class ExpenseDetailActivity : AppCompatActivity() {
     private fun displayExpenseData(expense: com.example.autouchet.Models.Expense) {
         binding.amountTextView.text = currencyFormat.format(expense.amount)
         binding.categoryTextView.text = expense.category
-
-        // Устанавливаем цвет категории
         binding.categoryTextView.setTextColor(expense.getCategoryColor())
 
         binding.dateTextView.text = dateFormatDisplay.format(expense.date)
@@ -109,8 +104,6 @@ class ExpenseDetailActivity : AppCompatActivity() {
         } else {
             binding.commentTextView.text = "Нет комментария"
         }
-
-        // Показываем магазин, если есть
         if (expense.shopName.isNotEmpty()) {
             binding.shopLayout.isVisible = true
             binding.shopTextView.text = expense.shopName
@@ -123,8 +116,6 @@ class ExpenseDetailActivity : AppCompatActivity() {
         CoroutineScope(Dispatchers.IO).launch {
             val database = AppDatabase.getDatabase(this@ExpenseDetailActivity)
             val tires = database.tireReplacementDao().getByCar(currentCarId)
-
-            // 1. Ищем шины ТОЛЬКО по expenseId
             val tireToShow = tires.find { it.expenseId == expenseId }
 
             withContext(Dispatchers.Main) {
@@ -135,9 +126,7 @@ class ExpenseDetailActivity : AppCompatActivity() {
                     params.topToBottom = R.id.tireInfoCard
                     binding.editButton.layoutParams = params
                 } else {
-                    // Если не нашли по expenseId, показываем сообщение
                     binding.tireInfoCard.isVisible = false
-                    // Или показываем сообщение об отсутствии информации
                     Toast.makeText(this@ExpenseDetailActivity, "Информация о шинах не найдена", Toast.LENGTH_SHORT).show()
                 }
             }
@@ -145,24 +134,17 @@ class ExpenseDetailActivity : AppCompatActivity() {
     }
 
     private fun displayTireInfo(tire: com.example.autouchet.Models.TireReplacement) {
-        // Тип резины
         binding.tireTypeTextView.text = tire.tireType
 
-        // Марка и модель
         val brandModel = if (tire.model.isNotEmpty()) {
             "${tire.brand} ${tire.model}"
         } else {
             tire.brand
         }
         binding.tireBrandModelTextView.text = brandModel
-
-        // Размер
         binding.tireSizeTextView.text = tire.size
-
-        // Срок службы
         binding.tireLifetimeTextView.text = "${tire.expectedLifetimeYears} года или ${String.format("%,d", tire.expectedLifetimeKm)} км"
 
-        // Статус
         val currentDate = Date()
         val (needsReplacement, statusMessage) = tire.needsReplacement(currentDate, currentMileage)
 
@@ -174,7 +156,6 @@ class ExpenseDetailActivity : AppCompatActivity() {
             binding.tireStatusTextView.setTextColor(getColor(R.color.green))
         }
 
-        // Оставшийся ресурс
         val daysPassed = (currentDate.time - tire.installationDate.time) / (1000 * 60 * 60 * 24)
         val yearsPassed = daysPassed / 365.0
         val kmPassed = currentMileage - tire.installationMileage
@@ -192,7 +173,6 @@ class ExpenseDetailActivity : AppCompatActivity() {
 
         binding.tireRemainingTextView.text = remainingText
 
-        // Подсветка если ресурс заканчивается
         if (yearsLeft < 1 || kmLeft < 10000) {
             binding.tireRemainingTextView.setTextColor(getColor(R.color.orange))
         }
@@ -219,15 +199,11 @@ class ExpenseDetailActivity : AppCompatActivity() {
 
             expense?.let {
                 database.expenseDao().delete(it)
-
-                // Если это шины, проверяем, нужно ли деактивировать запись о шинах
                 if (it.category == "Шины") {
                     val tires = database.tireReplacementDao().getByCar(currentCarId)
-                    // Ищем по expenseId
                     val tire = tires.find { tire -> tire.expenseId == expenseId }
 
                     tire?.let { tireRecord ->
-                        // Деактивируем шины
                         database.tireReplacementDao().update(tireRecord.copy(isActive = false))
                     }
                 }

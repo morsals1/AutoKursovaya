@@ -10,7 +10,7 @@ data class Reminder(
     val id: Int = 0,
     val carId: Int,
     val title: String,
-    val type: String, // "date", "mileage", "periodic"
+    val type: String,
     val targetDate: Date? = null,
     val targetMileage: Int? = null,
     val periodMonths: Int? = null,
@@ -20,7 +20,7 @@ data class Reminder(
     val createdDate: Date = Date(),
     val notifyDaysBefore: Int = 7,
     val notifyKmBefore: Int = 500,
-    val note: String = "" // УБЕРИТЕ amount, оно не нужно для напоминаний
+    val note: String = ""
 ) {
     fun getStatus(currentMileage: Int, currentDate: Date): String {
         if (isCompleted) return "Выполнено"

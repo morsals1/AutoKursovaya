@@ -123,7 +123,6 @@ class CarSettingsActivity : AppCompatActivity() {
             ).show()
             return
         }
-        // Устанавливаем мощность по умолчанию 0, так как поля больше нет
         val horsepower = 0
 
         val car = Car(
@@ -131,7 +130,7 @@ class CarSettingsActivity : AppCompatActivity() {
             brand = brand,
             model = model,
             year = year,
-            horsepower = horsepower, // Добавляем мощность по умолчанию
+            horsepower = horsepower,
             region = "",
             currentMileage = mileage
         )
@@ -243,19 +242,15 @@ class CarSettingsActivity : AppCompatActivity() {
 
             val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
             val csv = StringBuilder()
-
-            // Добавляем BOM (Byte Order Mark) для UTF-8, чтобы Excel правильно определил кодировку
             csv.append("\uFEFF")
-
-            // Экспорт автомобилей
-            csv.append("=== АВТОМОБИЛИ ===\n")
+            csv.append("АВТОМОБИЛИ\n")
             csv.append("ID;Марка;Модель;Год;Пробег\n")
             for (car in cars) {
                 csv.append("${car.id};${escapeCsv(car.brand)};${escapeCsv(car.model)};${car.year};")
                 csv.append("${car.currentMileage}\n")
             }
 
-            csv.append("\n=== РАСХОДЫ ===\n")
+            csv.append("\nРАСХОДЫ\n")
             csv.append("ID;АвтоID;Дата;Категория;Сумма;Пробег;Комментарий;Магазин\n")
 
             for (car in cars) {
@@ -272,8 +267,6 @@ class CarSettingsActivity : AppCompatActivity() {
                 val fileName = "autouchet_backup_${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())}.csv"
                 val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
                 val file = File(downloadsDir, fileName)
-
-                // Используем UTF-8 с BOM для записи файла
                 file.writeText(csv.toString(), Charsets.UTF_8)
 
                 withContext(Dispatchers.Main) {
@@ -306,8 +299,6 @@ class CarSettingsActivity : AppCompatActivity() {
 
     private fun escapeCsv(text: String): String {
         if (text.isEmpty()) return ""
-
-        // Экранируем кавычки и добавляем кавычки если есть точка с запятой, кавычки или перенос строки
         val escapedText = text.replace("\"", "\"\"")
 
         return if (escapedText.contains(";") || escapedText.contains("\"") || escapedText.contains("\n") || escapedText.contains("\r")) {
@@ -401,8 +392,6 @@ class CarSettingsActivity : AppCompatActivity() {
             }
 
             val backupData = mutableMapOf<String, Any>()
-
-            // Сохраняем автомобили (мощность всё ещё есть в модели Car)
             backupData["cars"] = cars.map { car ->
                 mapOf(
                     "id" to car.id,

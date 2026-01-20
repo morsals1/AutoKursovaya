@@ -28,22 +28,18 @@ class TireController(private val context: Context) {
             val database = AppDatabase.getDatabase(context)
 
             if (replaceAllTires) {
-                // Деактивируем ВСЕ активные шины
                 val activeTires = database.tireReplacementDao().getByCar(carId)
                     .filter { it.isActive }
                 activeTires.forEach { tire ->
                     database.tireReplacementDao().update(tire.copy(isActive = false))
                 }
             } else {
-                // Деактивируем только шины такого же типа
                 val oldTires = database.tireReplacementDao().getByCar(carId)
                     .filter { it.isActive && it.tireType == tireType }
                 oldTires.forEach { oldTire ->
                     database.tireReplacementDao().update(oldTire.copy(isActive = false))
                 }
             }
-
-            // Создаем новую запись
             val tire = TireReplacement(
                 carId = carId,
                 tireType = tireType,

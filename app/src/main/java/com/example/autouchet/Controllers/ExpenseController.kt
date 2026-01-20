@@ -22,7 +22,7 @@ class ExpenseController(private val context: Context) {
         comment: String = "",
         shopName: String = "",
         isFromReceipt: Boolean = false,
-        onComplete: (Int) -> Unit = {} // Изменено на Int
+        onComplete: (Int) -> Unit = {}
     ) {
         CoroutineScope(Dispatchers.IO).launch {
             val expense = Expense(
@@ -36,9 +36,7 @@ class ExpenseController(private val context: Context) {
                 createdByReceipt = isFromReceipt
             )
 
-            val expenseId = database.expenseDao().insert(expense).toInt() // Конвертируем в Int
-
-            // Обновляем пробег автомобиля
+            val expenseId = database.expenseDao().insert(expense).toInt()
             val car = database.carDao().getById(carId)
             car?.let {
                 if (mileage > it.currentMileage) {
@@ -158,14 +156,11 @@ class ExpenseController(private val context: Context) {
         }
     }
 
-    // НОВЫЕ МЕТОДЫ ДЛЯ ПОЛНОЙ РЕАЛИЗАЦИИ
-
     suspend fun getExpensesForMonthSync(carId: Int, year: Int, month: Int): List<Expense> {
         return withContext(Dispatchers.IO) {
-            // Создаем диапазон дат для месяца
             val calendar = Calendar.getInstance().apply {
                 set(Calendar.YEAR, year)
-                set(Calendar.MONTH, month - 1) // месяц в Calendar начинается с 0
+                set(Calendar.MONTH, month - 1)
                 set(Calendar.DAY_OF_MONTH, 1)
                 set(Calendar.HOUR_OF_DAY, 0)
                 set(Calendar.MINUTE, 0)

@@ -34,7 +34,7 @@ class NotificationManager(private val context: Context) {
 
     fun showReminderNotification(title: String, message: String) {
         val notification = NotificationCompat.Builder(context, channelId)
-            .setSmallIcon(R.drawable.ic_car) // Убедитесь что есть иконка ic_car
+            .setSmallIcon(R.drawable.ic_car)
             .setContentTitle(title)
             .setContentText(message)
             .setPriority(NotificationCompat.PRIORITY_HIGH)

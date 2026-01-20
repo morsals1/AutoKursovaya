@@ -7,7 +7,6 @@
     android:layout_height="match_parent"
     android:background="@color/background">
 
-    <!-- Toolbar -->
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/toolbar"
         android:layout_width="0dp"
@@ -40,7 +39,6 @@
                 android:textColor="@color/text_primary"
                 android:layout_centerInParent="true"/>
 
-            <!-- Невидимый элемент такой же ширины как кнопка назад для симметрии -->
             <View
                 android:layout_width="24dp"
                 android:layout_height="24dp"
@@ -52,7 +50,6 @@
         </RelativeLayout>
     </com.google.android.material.appbar.MaterialToolbar>
 
-    <!-- Основной контент с прокруткой -->
     <androidx.core.widget.NestedScrollView
         android:id="@+id/nestedScrollView"
         android:layout_width="0dp"
@@ -68,7 +65,6 @@
             android:layout_height="wrap_content"
             android:paddingBottom="16dp">
 
-            <!-- Секция с активными напоминаниями -->
             <TextView
                 android:id="@+id/activeRemindersTitle"
                 android:layout_width="0dp"
@@ -83,7 +79,6 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"/>
 
-            <!-- Список активных напоминаний -->
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/activeRemindersRecyclerView"
                 android:layout_width="0dp"
@@ -96,7 +91,6 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/activeRemindersTitle"/>
 
-            <!-- Секция с выполненными напоминаниями -->
             <TextView
                 android:id="@+id/completedRemindersTitle"
                 android:layout_width="0dp"
@@ -112,7 +106,6 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/activeRemindersRecyclerView"/>
 
-            <!-- Список выполненых напоминаний -->
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/completedRemindersRecyclerView"
                 android:layout_width="0dp"
@@ -126,7 +119,6 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/completedRemindersTitle"/>
 
-            <!-- Форма добавления -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/addReminderCard"
                 android:layout_width="0dp"
@@ -155,7 +147,6 @@
                         android:textColor="@color/text_primary"
                         android:layout_marginBottom="16dp"/>
 
-                    <!-- Тип -->
                     <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/typeLayout"
                         android:layout_width="match_parent"
@@ -174,7 +165,6 @@
 
                     </com.google.android.material.textfield.TextInputLayout>
 
-                    <!-- Название -->
                     <com.google.android.material.textfield.TextInputLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -190,7 +180,6 @@
 
                     </com.google.android.material.textfield.TextInputLayout>
 
-                    <!-- Дата (видно при выборе "По дате" или "Периодическое") -->
                     <LinearLayout
                         android:id="@+id/dateLayout"
                         android:layout_width="match_parent"
@@ -220,7 +209,6 @@
 
                     </LinearLayout>
 
-                    <!-- Пробег (видно при выборе "По пробегу") -->
                     <LinearLayout
                         android:id="@+id/mileageLayout"
                         android:layout_width="match_parent"
@@ -245,7 +233,6 @@
 
                     </LinearLayout>
 
-                    <!-- Период (видно при выборе "Периодическое") -->
                     <LinearLayout
                         android:id="@+id/periodLayout"
                         android:layout_width="match_parent"
@@ -270,7 +257,6 @@
 
                     </LinearLayout>
 
-                    <!-- Кнопка создания -->
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/createReminderButton"
                         android:layout_width="match_parent"

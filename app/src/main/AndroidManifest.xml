@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
-
-    <!-- Разрешения -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
@@ -17,18 +15,14 @@
         android:maxSdkVersion="28" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="28" />
-
-    <!-- Для Android 10+ -->
     <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
         tools:ignore="ScopedStorage" />
-
     <uses-feature
         android:name="android.hardware.camera"
         android:required="false" />
     <uses-feature
         android:name="android.hardware.camera.autofocus"
         android:required="false" />
-
     <application
         android:allowBackup="true"
         android:icon="@drawable/ic_car"
@@ -36,7 +30,6 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.MaterialComponents.Light.NoActionBar"
         tools:targetApi="31">
-
         <activity
             android:name=".Views.ExpenseDetailActivity"
             android:exported="false"
@@ -70,8 +63,6 @@
             android:name=".Views.RemindersActivity"
             android:exported="false"
             android:screenOrientation="portrait" />
-
-        <!-- ReminderReceiver с правильными intent-фильтрами -->
         <receiver
             android:name=".Receivers.ReminderReceiver"
             android:enabled="true"
@@ -86,8 +77,6 @@
                 <action android:name="android.intent.action.REBOOT" />
             </intent-filter>
         </receiver>
-
-        <!-- RestartReceiver для перепланирования после перезагрузки -->
         <receiver
             android:name=".Receivers.RestartReceiver"
             android:enabled="true"
@@ -98,13 +87,10 @@
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
         </receiver>
-
-        <!-- Service для работы в фоне -->
         <service
             android:name=".Services.ReminderService"
             android:enabled="true"
             android:exported="false" />
-
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.provider"

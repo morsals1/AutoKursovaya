@@ -18,10 +18,10 @@ data class TireReplacement(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
     val carId: Int,
-    val tireType: String, // "Зимняя", "Летняя", "Всесезонная"
-    val brand: String = "", // Марка шин
-    val model: String = "", // Модель шин
-    val size: String = "", // Размер, например: 195/65 R15
+    val tireType: String,
+    val brand: String = "",
+    val model: String = "",
+    val size: String = "",
     val installationDate: Date,
     val installationMileage: Int,
     val price: Double = 0.0,

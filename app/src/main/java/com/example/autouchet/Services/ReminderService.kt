@@ -38,7 +38,6 @@ class ReminderService : Service() {
                 }
             }
             else -> {
-                // По умолчанию перепланируем напоминания
                 CoroutineScope(Dispatchers.IO).launch {
                     rescheduleAllReminders()
                 }
@@ -92,8 +91,6 @@ class ReminderService : Service() {
                 val activeReminders = reminders.filter { !it.isCompleted }
 
                 Log.d("ReminderService", "Found ${activeReminders.size} active reminders")
-
-                // Используем логику из RemindersActivity для перепланирования
                 scheduleReminders(activeReminders)
 
                 Log.d("ReminderService", "All reminders rescheduled")
@@ -101,7 +98,6 @@ class ReminderService : Service() {
         } catch (e: Exception) {
             Log.e("ReminderService", "Error rescheduling reminders", e)
         } finally {
-            // Останавливаем сервис после завершения работы
             stopSelf()
         }
     }

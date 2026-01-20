@@ -74,7 +74,6 @@ class RemindersActivity : AppCompatActivity() {
     }
 
     private fun checkAndRequestPermissions() {
-        // Запрос разрешения на уведомления для Android 13+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(
                     this,
@@ -88,8 +87,6 @@ class RemindersActivity : AppCompatActivity() {
                 )
             }
         }
-
-        // Проверка разрешения на точные алерты для Android 12+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             if (!alarmManager.canScheduleExactAlarms()) {
                 val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
@@ -313,8 +310,6 @@ class RemindersActivity : AppCompatActivity() {
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-
-        // Для Android 12+ проверяем разрешение на точные алерты
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             if (alarmManager.canScheduleExactAlarms()) {
                 alarmManager.setExactAndAllowWhileIdle(
@@ -323,7 +318,6 @@ class RemindersActivity : AppCompatActivity() {
                     pendingIntent
                 )
             } else {
-                // Пытаемся использовать неточный алерт как запасной вариант
                 alarmManager.set(
                     AlarmManager.RTC_WAKEUP,
                     calendar.timeInMillis,
@@ -364,7 +358,6 @@ class RemindersActivity : AppCompatActivity() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        // Планируем проверку на завтра в 9 утра
         val calendar = Calendar.getInstance().apply {
             add(Calendar.DAY_OF_MONTH, 1)
             set(Calendar.HOUR_OF_DAY, 9)
@@ -414,7 +407,6 @@ class RemindersActivity : AppCompatActivity() {
     }
 
     private fun cancelReminderNotifications(reminderId: Int) {
-        // Отменяем все напоминания по дате
         for (daysBefore in listOf(0, 1, 3, 7)) {
             val intent = Intent(this, com.example.autouchet.Receivers.ReminderReceiver::class.java)
             val pendingIntent = PendingIntent.getBroadcast(
@@ -426,7 +418,6 @@ class RemindersActivity : AppCompatActivity() {
             pendingIntent?.cancel()
         }
 
-        // Отменяем проверку пробега
         val mileageIntent = Intent(this, com.example.autouchet.Receivers.ReminderReceiver::class.java)
         val mileagePendingIntent = PendingIntent.getBroadcast(
             this,
@@ -435,8 +426,6 @@ class RemindersActivity : AppCompatActivity() {
             PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
         )
         mileagePendingIntent?.cancel()
-
-        // Убираем уведомление
         notificationManager.cancel(reminderId + notificationIdBase)
     }
 

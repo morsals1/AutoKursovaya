@@ -30,7 +30,6 @@ class ReminderReceiver : BroadcastReceiver() {
             Intent.ACTION_BOOT_COMPLETED,
             "android.intent.action.QUICKBOOT_POWERON",
             "com.htc.intent.action.QUICKBOOT_POWERON" -> {
-                // При перезагрузке телефона запускаем сервис для перепланирования напоминаний
                 Log.d("ReminderReceiver", "Device rebooted, rescheduling reminders")
                 rescheduleAllReminders(context)
             }
@@ -59,7 +58,6 @@ class ReminderReceiver : BroadcastReceiver() {
 
         showNotification(context, reminderId, "Напоминание", message)
 
-        // Если это периодическое напоминание и оно на сегодня, перепланируем на следующий период
         if (daysBefore == 0) {
             checkAndReschedulePeriodicReminder(context, reminderId)
         }
@@ -79,18 +77,10 @@ class ReminderReceiver : BroadcastReceiver() {
                     reminder.periodMonths?.let { periodMonths ->
                         calendar.add(Calendar.MONTH, periodMonths)
                         val newDate = calendar.time
-
-                        // Обновляем дату в базе данных
                         val updatedReminder = reminder.copy(targetDate = newDate)
                         database.reminderDao().update(updatedReminder)
-
-                        // Перепланируем уведомления для новой даты
                         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-
-                        // Планируем уведомление за 7 дней
                         scheduleSingleReminder(context, alarmManager, updatedReminder, newDate, 7)
-
-                        // Планируем уведомление на сам день
                         scheduleSingleReminder(context, alarmManager, updatedReminder, newDate, 0)
                     }
                 }
@@ -177,7 +167,6 @@ class ReminderReceiver : BroadcastReceiver() {
                     val kmLeft = reminder.targetMileage!! - it.currentMileage
 
                     if (kmLeft > 0) {
-                        // Показываем уведомление если осталось мало км
                         val message = when {
                             kmLeft <= 100 -> "Осталось $kmLeft км: $reminderTitle"
                             kmLeft <= 500 -> "Осталось $kmLeft км: $reminderTitle"
@@ -189,14 +178,10 @@ class ReminderReceiver : BroadcastReceiver() {
                             showNotification(context, reminderId, "Напоминание по пробегу", message)
                         }
 
-                        // Планируем следующую проверку на завтра
                         scheduleNextMileageCheck(context, reminderId, reminderTitle)
                     } else if (kmLeft <= 0) {
-                        // Целевой пробег достигнут
                         showNotification(context, reminderId, "Напоминание по пробегу",
                             "Достигнут целевой пробег: $reminderTitle")
-
-                        // Отмечаем как выполненное
                         val updatedReminder = reminder.copy(isCompleted = true)
                         database.reminderDao().update(updatedReminder)
                     }
@@ -272,7 +257,6 @@ class ReminderReceiver : BroadcastReceiver() {
 
                     Log.d("ReminderReceiver", "Found ${activeReminders.size} active reminders to reschedule")
 
-                    // Запускаем сервис для перепланирования
                     val serviceIntent = Intent(context, com.example.autouchet.Services.ReminderService::class.java).apply {
                         putExtra("action", "reschedule")
                         putExtra("reminders_count", activeReminders.size)

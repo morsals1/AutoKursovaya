@@ -39,8 +39,6 @@ class ExpensesListActivity : AppCompatActivity() {
 
     private var currentCarId: Int = -1
     private var currentDate = Calendar.getInstance()
-
-    // Данные для фильтрации
     private var allExpenses = listOf<Expense>()
     private var filteredExpenses = listOf<Expense>()
     private val categories = listOf(
@@ -48,8 +46,6 @@ class ExpensesListActivity : AppCompatActivity() {
         "Мойка", "Страховка", "Налоги", "Парковка",
         "Штрафы", "Другое"
     )
-
-    // Фильтры
     private var searchQuery = ""
     private var selectedCategory = ""
     private var amountFrom: Double? = null
@@ -79,8 +75,6 @@ class ExpensesListActivity : AppCompatActivity() {
             layoutManager = LinearLayoutManager(this@ExpensesListActivity)
             adapter = expenseAdapter
         }
-
-        // Настройка автодополнения для категорий
         val categoryAdapter = ArrayAdapter(
             this,
             android.R.layout.simple_dropdown_item_1line,
@@ -129,27 +123,20 @@ class ExpensesListActivity : AppCompatActivity() {
         binding.addFirstExpenseButton.setOnClickListener {
             startActivity(Intent(this, AddExpenseActivity::class.java))
         }
-
-        // Кнопка фильтра
         binding.filterButton.setOnClickListener {
             val isVisible = binding.filtersCard.visibility == View.VISIBLE
             binding.filtersCard.visibility = if (isVisible) View.GONE else View.VISIBLE
         }
-
-        // Применить фильтры
         binding.applyFiltersButton.setOnClickListener {
             applyFilters()
             binding.filtersCard.visibility = View.GONE
         }
-
-        // Сбросить фильтры
         binding.clearFiltersButton.setOnClickListener {
             clearFilters()
         }
     }
 
     private fun setupSearchAndFilters() {
-        // Поиск с задержкой
         binding.searchEditText.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
@@ -158,8 +145,6 @@ class ExpensesListActivity : AppCompatActivity() {
                 applyFilters()
             }
         })
-
-        // Фильтр по категории
         binding.categoryFilterAutoCompleteTextView.setOnItemClickListener { _, _, position, _ ->
             selectedCategory = if (position == 0) "" else categories[position - 1]
         }
@@ -180,7 +165,7 @@ class ExpensesListActivity : AppCompatActivity() {
             val month = currentDate.get(Calendar.MONTH) + 1
 
             allExpenses = expenseController.getExpensesForMonthSync(currentCarId, year, month)
-            applyFilters() // Применяем фильтры после загрузки
+            applyFilters()
 
             withContext(Dispatchers.Main) {
                 updateUI()
@@ -189,7 +174,6 @@ class ExpensesListActivity : AppCompatActivity() {
     }
 
     private fun applyFilters() {
-        // Получаем значения суммы
         val amountFromText = binding.amountFromEditText.text.toString()
         val amountToText = binding.amountToEditText.text.toString()
 
@@ -197,16 +181,11 @@ class ExpensesListActivity : AppCompatActivity() {
         amountTo = amountToText.toDoubleOrNull()
 
         filteredExpenses = allExpenses.filter { expense ->
-            // Поиск по тексту
             val matchesSearch = searchQuery.isEmpty() ||
                     expense.category.contains(searchQuery, ignoreCase = true) ||
                     expense.comment.contains(searchQuery, ignoreCase = true) ||
                     expense.shopName.contains(searchQuery, ignoreCase = true)
-
-            // Фильтр по категории
             val matchesCategory = selectedCategory.isEmpty() || expense.category == selectedCategory
-
-            // Фильтр по сумме
             val matchesAmountFrom = amountFrom == null || expense.amount >= amountFrom!!
             val matchesAmountTo = amountTo == null || expense.amount <= amountTo!!
 

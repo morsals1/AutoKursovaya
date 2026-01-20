@@ -61,13 +61,11 @@ class AnalyticsController(private val context: Context) {
     suspend fun getSeasonalComparison(carId: Int): SeasonalComparison {
         return withContext(Dispatchers.IO) {
             val calendar = Calendar.getInstance()
-
             var winterTotal = 0.0
             var winterCount = 0
             var summerTotal = 0.0
             var summerCount = 0
 
-            // Анализируем данные за последние 12 месяцев
             for (monthOffset in 0..11) {
                 calendar.time = Date()
                 calendar.add(Calendar.MONTH, -monthOffset)
@@ -77,11 +75,9 @@ class AnalyticsController(private val context: Context) {
                 val total = database.expenseDao().getTotalByDateRange(carId, startDate, endDate) ?: 0.0
 
                 if (month in 10..12 || month in 1..3) {
-                    // Зимние месяцы (окт-март)
                     winterTotal += total
                     winterCount++
                 } else if (month in 4..9) {
-                    // Летние месяцы (апр-сен)
                     summerTotal += total
                     summerCount++
                 }

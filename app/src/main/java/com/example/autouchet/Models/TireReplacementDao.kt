@@ -28,7 +28,6 @@ interface TireReplacementDao {
     @Query("SELECT * FROM tire_replacements WHERE carId = :carId AND tireType = :tireType AND isActive = 1 LIMIT 1")
     suspend fun getActiveTireByType(carId: Int, tireType: String): TireReplacement?
 
-    // Метод для поиска шин по пробегу
     @Query("SELECT * FROM tire_replacements WHERE carId = :carId AND installationMileage = :mileage ORDER BY installationDate DESC LIMIT 1")
     suspend fun getByMileage(carId: Int, mileage: Int): TireReplacement?
 }

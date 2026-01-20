@@ -19,7 +19,6 @@ interface ReminderDao {
     @Query("SELECT * FROM reminders WHERE carId = :carId ORDER BY createdDate DESC")
     suspend fun getAllByCar(carId: Int): List<Reminder>
 
-    // Новые методы для полной функциональности
 
     @Query("SELECT * FROM reminders WHERE carId = :carId AND isCompleted = 1 ORDER BY completedDate DESC")
     suspend fun getCompletedByCar(carId: Int): List<Reminder>

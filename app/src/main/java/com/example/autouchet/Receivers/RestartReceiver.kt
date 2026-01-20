@@ -15,7 +15,6 @@ class RestartReceiver : BroadcastReceiver() {
             "android.intent.action.QUICKBOOT_POWERON",
             "com.htc.intent.action.QUICKBOOT_POWERON",
             Intent.ACTION_MY_PACKAGE_REPLACED -> {
-                // Запускаем сервис для перепланирования всех напоминаний
                 val serviceIntent = Intent(context, ReminderService::class.java)
                 serviceIntent.action = "RESCHEDULE_ALL"
 

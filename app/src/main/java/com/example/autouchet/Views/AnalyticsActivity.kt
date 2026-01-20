@@ -719,8 +719,6 @@ class AnalyticsActivity : AppCompatActivity() {
 
         if (hasData) {
             binding.seasonalCard.visibility = android.view.View.VISIBLE
-
-            // Показываем среднемесячные расходы
             binding.winterAverageTextView.text =
                 if (comparison.winterAverage > 0)
                     "• Зимой: ${currencyFormat.format(comparison.winterAverage)}"
@@ -732,37 +730,28 @@ class AnalyticsActivity : AppCompatActivity() {
                     "• Летом: ${currencyFormat.format(comparison.summerAverage)}"
                 else
                     "• Летом: нет данных"
-
-            // Определяем есть ли данные в обоих сезонах
             val hasBothSeasons = comparison.winterAverage > 0 && comparison.summerAverage > 0
 
             if (hasBothSeasons) {
-                // Есть данные в обоих сезонах - можно сравнивать
                 val percentDifference = ((comparison.winterAverage - comparison.summerAverage) / comparison.summerAverage * 100)
 
                 if (Math.abs(percentDifference) < 1) {
-                    // Разница менее 1% - считаем одинаковыми
                     binding.seasonComparisonTextView.text = "• Расходы почти одинаковы"
                     binding.seasonComparisonTextView.setTextColor(getColor(R.color.text_secondary))
                 } else if (percentDifference > 0) {
-                    // Зима дороже
                     binding.seasonComparisonTextView.text = "• Зима дороже на ${String.format("%.0f", percentDifference)}%"
                     binding.seasonComparisonTextView.setTextColor(getColor(R.color.red))
                 } else {
-                    // Лето дороже
                     binding.seasonComparisonTextView.text = "• Лето дороже на ${String.format("%.0f", -percentDifference)}%"
                     binding.seasonComparisonTextView.setTextColor(getColor(R.color.red))
                 }
             } else if (comparison.winterAverage > 0) {
-                // Только зимние расходы
                 binding.seasonComparisonTextView.text = "• Есть только зимние расходы"
                 binding.seasonComparisonTextView.setTextColor(getColor(R.color.text_secondary))
             } else if (comparison.summerAverage > 0) {
-                // Только летние расходы
                 binding.seasonComparisonTextView.text = "• Есть только летние расходы"
                 binding.seasonComparisonTextView.setTextColor(getColor(R.color.text_secondary))
             } else {
-                // Это не должно случиться, но на всякий случай
                 binding.seasonComparisonTextView.text = "• Недостаточно данных"
                 binding.seasonComparisonTextView.setTextColor(getColor(R.color.text_secondary))
             }
