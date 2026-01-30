@@ -2,8 +2,10 @@ package com.example.autouchet.Views
 
 import android.content.Intent
 import android.os.Bundle
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import com.example.autouchet.Models.AppDatabase
 import com.example.autouchet.R
@@ -16,6 +18,7 @@ import kotlinx.coroutines.withContext
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.math.max
 
 class ExpenseDetailActivity : AppCompatActivity() {
     private lateinit var binding: ActivityExpenseDetailBinding
@@ -115,25 +118,64 @@ class ExpenseDetailActivity : AppCompatActivity() {
     private fun loadTireInfo(expenseId: Int) {
         CoroutineScope(Dispatchers.IO).launch {
             val database = AppDatabase.getDatabase(this@ExpenseDetailActivity)
-            val tires = database.tireReplacementDao().getByCar(currentCarId)
-            val tireToShow = tires.find { it.expenseId == expenseId }
+            val expense = database.expenseDao().getById(expenseId)
 
-            withContext(Dispatchers.Main) {
-                if (tireToShow != null) {
-                    displayTireInfo(tireToShow)
-                    binding.tireInfoCard.isVisible = true
-                    val params = binding.editButton.layoutParams as androidx.constraintlayout.widget.ConstraintLayout.LayoutParams
-                    params.topToBottom = R.id.tireInfoCard
-                    binding.editButton.layoutParams = params
+            expense?.let { exp ->
+                if (exp.category != "Шины") {
+                    withContext(Dispatchers.Main) {
+                        binding.tireInfoCard.isVisible = false
+                    }
+                    return@launch
+                }
+                val allTires = database.tireReplacementDao().getByCar(currentCarId)
+                val tireInstalledInThisExpense = allTires.find { it.expenseId == expenseId }
+                val currentActiveTireSameType = if (tireInstalledInThisExpense != null) {
+                    allTires.find {
+                        it.isActive &&
+                                it.tireType == tireInstalledInThisExpense.tireType &&
+                                it.id != tireInstalledInThisExpense.id
+                    }
                 } else {
-                    binding.tireInfoCard.isVisible = false
-                    Toast.makeText(this@ExpenseDetailActivity, "Информация о шинах не найдена", Toast.LENGTH_SHORT).show()
+                    allTires.filter { it.isActive }
+                        .maxByOrNull { it.installationDate }
+                }
+
+                withContext(Dispatchers.Main) {
+                    when {
+                        tireInstalledInThisExpense != null -> {
+                            displayTireInfo(tireInstalledInThisExpense, true)
+                            binding.tireInfoCard.isVisible = true
+
+                            if (!tireInstalledInThisExpense.isActive) {
+                                binding.tireInfoCard.setCardBackgroundColor(
+                                    ContextCompat.getColor(this@ExpenseDetailActivity, R.color.divider)
+                                )
+                            }
+                        }
+                        currentActiveTireSameType != null -> {
+                            displayTireInfo(currentActiveTireSameType, false)
+                            binding.tireInfoCard.isVisible = true
+                        }
+
+                        else -> {
+                            binding.tireInfoCard.isVisible = false
+                        }
+                    }
                 }
             }
         }
     }
 
-    private fun displayTireInfo(tire: com.example.autouchet.Models.TireReplacement) {
+    private fun displayTireInfo(tire: com.example.autouchet.Models.TireReplacement, fromThisExpense: Boolean) {
+        val headerTextView = binding.tireInfoCard.findViewById<TextView>(R.id.tireInfoSubtitle)
+        if (headerTextView != null) {
+            headerTextView.text = if (fromThisExpense) {
+                "Установленные в этом расходе шины"
+            } else {
+                "Текущие активные шины"
+            }
+        }
+
         binding.tireTypeTextView.text = tire.tireType
 
         val brandModel = if (tire.model.isNotEmpty()) {
@@ -145,36 +187,72 @@ class ExpenseDetailActivity : AppCompatActivity() {
         binding.tireSizeTextView.text = tire.size
         binding.tireLifetimeTextView.text = "${tire.expectedLifetimeYears} года или ${String.format("%,d", tire.expectedLifetimeKm)} км"
 
-        val currentDate = Date()
-        val (needsReplacement, statusMessage) = tire.needsReplacement(currentDate, currentMileage)
+        val statusColor: Int
+        val statusText: String
 
-        if (needsReplacement) {
-            binding.tireStatusTextView.text = "Требуют замены"
-            binding.tireStatusTextView.setTextColor(getColor(R.color.red))
+        if (!tire.isActive) {
+            statusText = "Заменены"
+            statusColor = getColor(R.color.text_secondary)
+            binding.tireStatusTextView.setTextColor(statusColor)
+            binding.tireTypeTextView.setTextColor(getColor(R.color.text_secondary))
+            binding.tireBrandModelTextView.setTextColor(getColor(R.color.text_secondary))
+            binding.tireSizeTextView.setTextColor(getColor(R.color.text_secondary))
+            binding.tireLifetimeTextView.setTextColor(getColor(R.color.text_secondary))
+            binding.tireRemainingTextView.text = "Замена выполнена"
+            binding.tireRemainingTextView.setTextColor(getColor(R.color.text_secondary))
+
         } else {
-            binding.tireStatusTextView.text = "Активны"
-            binding.tireStatusTextView.setTextColor(getColor(R.color.green))
+            binding.tireTypeTextView.setTextColor(getColor(R.color.text_primary))
+            binding.tireBrandModelTextView.setTextColor(getColor(R.color.text_primary))
+            binding.tireSizeTextView.setTextColor(getColor(R.color.text_primary))
+            binding.tireLifetimeTextView.setTextColor(getColor(R.color.text_primary))
+
+            val currentDate = Date()
+            val (needsReplacement, statusMessage) = tire.needsReplacement(currentDate, currentMileage)
+
+            if (needsReplacement) {
+                statusText = "Требуют замены"
+                statusColor = getColor(R.color.red)
+            } else {
+                statusText = "Активны"
+                statusColor = getColor(R.color.green)
+            }
+
+            binding.tireStatusTextView.setTextColor(statusColor)
+
+            val daysPassed = (currentDate.time - tire.installationDate.time) / (1000 * 60 * 60 * 24)
+            val yearsPassed = daysPassed / 365.0
+            val kmPassed = currentMileage - tire.installationMileage
+
+            val yearsLeft = max(0.0, tire.expectedLifetimeYears - yearsPassed)
+            val kmLeft = max(0, tire.expectedLifetimeKm - kmPassed)
+
+            val remainingText = when {
+                yearsLeft <= 0 && kmLeft <= 0 -> "Ресурс исчерпан"
+                yearsLeft > 0 && kmLeft > 0 -> {
+                    "${String.format("%.1f", yearsLeft)} лет или ${String.format("%,d", kmLeft)} км"
+                }
+                yearsLeft > 0 -> "${String.format("%.1f", yearsLeft)} лет"
+                kmLeft > 0 -> "${String.format("%,d", kmLeft)} км"
+                else -> "Ресурс исчерпан"
+            }
+
+            binding.tireRemainingTextView.text = remainingText
+            binding.tireRemainingTextView.setTextColor(
+                when {
+                    yearsLeft < 0.5 || kmLeft < 5000 -> getColor(R.color.red)
+                    yearsLeft < 1 || kmLeft < 10000 -> getColor(R.color.orange)
+                    else -> getColor(R.color.text_primary)
+                }
+            )
         }
 
-        val daysPassed = (currentDate.time - tire.installationDate.time) / (1000 * 60 * 60 * 24)
-        val yearsPassed = daysPassed / 365.0
-        val kmPassed = currentMileage - tire.installationMileage
+        binding.tireStatusTextView.text = statusText
 
-        val yearsLeft = tire.expectedLifetimeYears - yearsPassed
-        val kmLeft = tire.expectedLifetimeKm - kmPassed
-
-        val remainingText = when {
-            yearsLeft <= 0 && kmLeft <= 0 -> "Ресурс исчерпан"
-            yearsLeft > 0 && kmLeft > 0 -> "${String.format("%.1f", yearsLeft)} лет или ${String.format("%,d", kmLeft)} км"
-            yearsLeft > 0 -> "${String.format("%.1f", yearsLeft)} лет"
-            kmLeft > 0 -> "${String.format("%,d", kmLeft)} км"
-            else -> "Ресурс исчерпан"
-        }
-
-        binding.tireRemainingTextView.text = remainingText
-
-        if (yearsLeft < 1 || kmLeft < 10000) {
-            binding.tireRemainingTextView.setTextColor(getColor(R.color.orange))
+        if (!fromThisExpense) {
+            val additionalInfo = "\n\n⚠️ Показаны текущие активные шины этого типа."
+            val currentText = binding.tireRemainingTextView.text.toString()
+            binding.tireRemainingTextView.text = currentText + additionalInfo
         }
     }
 
@@ -193,18 +271,61 @@ class ExpenseDetailActivity : AppCompatActivity() {
     }
 
     private fun deleteExpense() {
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("Удаление расхода")
+            .setMessage("Вы уверены, что хотите удалить этот расход?")
+            .setPositiveButton("Удалить") { dialog, _ ->
+                performDelete()
+                dialog.dismiss()
+            }
+            .setNegativeButton("Отмена") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .show()
+    }
+
+    private fun performDelete() {
         CoroutineScope(Dispatchers.IO).launch {
             val database = AppDatabase.getDatabase(this@ExpenseDetailActivity)
             val expense = database.expenseDao().getById(expenseId)
 
-            expense?.let {
-                database.expenseDao().delete(it)
-                if (it.category == "Шины") {
-                    val tires = database.tireReplacementDao().getByCar(currentCarId)
-                    val tire = tires.find { tire -> tire.expenseId == expenseId }
+            expense?.let { exp ->
+                database.expenseDao().delete(exp)
 
-                    tire?.let { tireRecord ->
-                        database.tireReplacementDao().update(tireRecord.copy(isActive = false))
+                if (exp.category == "Шины") {
+                    val tires = database.tireReplacementDao().getByCar(currentCarId)
+                    val tireForThisExpense = tires.find { it.expenseId == expenseId }
+                    tireForThisExpense?.let { tire ->
+                        database.tireReplacementDao().update(
+                            tire.copy(
+                                isActive = false,
+                                notes = if (tire.notes.isNullOrEmpty()) "Удалены ${SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()).format(Date())}"
+                                else "${tire.notes}. Удалены ${SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()).format(Date())}"
+                            )
+                        )
+                    }
+                    val currentActiveTires = tires.filter { it.isActive }
+                    val tireType = tireForThisExpense?.tireType
+
+                    if (tireType != null) {
+                        val newestActiveTireSameType = currentActiveTires
+                            .filter { it.tireType == tireType }
+                            .maxByOrNull { it.installationDate }
+                        if (newestActiveTireSameType == null) {
+                            val newestInactiveTireSameType = tires
+                                .filter { !it.isActive && it.tireType == tireType }
+                                .maxByOrNull { it.installationDate }
+
+                            newestInactiveTireSameType?.let { inactiveTire ->
+                                database.tireReplacementDao().update(
+                                    inactiveTire.copy(
+                                        isActive = true,
+                                        notes = if (inactiveTire.notes.isNullOrEmpty()) "Активированы ${SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()).format(Date())}"
+                                        else "${inactiveTire.notes}. Активированы ${SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()).format(Date())}"
+                                    )
+                                )
+                            }
+                        }
                     }
                 }
 

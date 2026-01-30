@@ -449,26 +449,77 @@ class AddExpenseActivity : AppCompatActivity() {
                 if (replaceAllTires) {
                     val activeTires = database.tireReplacementDao().getByCar(currentCarId)
                         .filter { it.isActive }
-                    activeTires.forEach { tire ->
-                        database.tireReplacementDao().update(tire.copy(isActive = false))
-                    }
-                }
-                val tireReplacement = TireReplacement(
-                    carId = currentCarId,
-                    tireType = tireType,
-                    brand = brand,
-                    model = model,
-                    size = size,
-                    installationDate = installationDate,
-                    installationMileage = installationMileage,
-                    price = 0.0,
-                    expectedLifetimeYears = expectedYears,
-                    expectedLifetimeKm = expectedKm,
-                    isActive = true,
-                    expenseId = expenseId
-                )
 
-                database.tireReplacementDao().insert(tireReplacement)
+                    activeTires.forEach { tire ->
+                        database.tireReplacementDao().update(
+                            tire.copy(
+                                isActive = false,
+                                notes = if (tire.notes.isNullOrEmpty()) "Заменены ${SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()).format(Date())}"
+                                else "${tire.notes}. Заменены ${SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()).format(Date())}"
+                            )
+                        )
+                    }
+
+                    val tireTypesToCreate = if (replaceAllTires) listOf("Зимняя", "Летняя") else listOf(tireType)
+
+                    tireTypesToCreate.forEach { type ->
+                        val tireReplacement = TireReplacement(
+                            carId = currentCarId,
+                            tireType = type,
+                            brand = brand,
+                            model = model,
+                            size = size,
+                            installationDate = installationDate,
+                            installationMileage = installationMileage,
+                            price = 0.0,
+                            expectedLifetimeYears = expectedYears,
+                            expectedLifetimeKm = expectedKm,
+                            isActive = true,
+                            expenseId = if (type == tireType) expenseId else null
+                        )
+
+                        database.tireReplacementDao().insert(tireReplacement)
+                    }
+                } else {
+                    val oldTiresSameType = database.tireReplacementDao().getByCar(currentCarId)
+                        .filter { it.isActive && it.tireType == tireType }
+
+                    oldTiresSameType.forEach { oldTire ->
+                        database.tireReplacementDao().update(
+                            oldTire.copy(
+                                isActive = false,
+                                notes = if (oldTire.notes.isNullOrEmpty()) "Заменены ${SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()).format(Date())}"
+                                else "${oldTire.notes}. Заменены ${SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()).format(Date())}"
+                            )
+                        )
+                    }
+                    val tireReplacement = TireReplacement(
+                        carId = currentCarId,
+                        tireType = tireType,
+                        brand = brand,
+                        model = model,
+                        size = size,
+                        installationDate = installationDate,
+                        installationMileage = installationMileage,
+                        price = 0.0,
+                        expectedLifetimeYears = expectedYears,
+                        expectedLifetimeKm = expectedKm,
+                        isActive = true,
+                        expenseId = expenseId
+                    )
+
+                    database.tireReplacementDao().insert(tireReplacement)
+                }
+
+                val allTires = database.tireReplacementDao().getByCar(currentCarId)
+                android.util.Log.d("TireDebug", "=== Состояние шин после сохранения ===")
+                allTires.forEach { tire ->
+                    android.util.Log.d("TireDebug",
+                        "ID: ${tire.id}, Тип: ${tire.tireType}, Активна: ${tire.isActive}, " +
+                                "Дата установки: ${SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()).format(tire.installationDate)}, " +
+                                "expenseId: ${tire.expenseId}"
+                    )
+                }
             }
         }
     }
@@ -659,57 +710,120 @@ class AddExpenseActivity : AppCompatActivity() {
         CoroutineScope(Dispatchers.IO).launch {
             val database = AppDatabase.getDatabase(this@AddExpenseActivity)
             val existingTires = database.tireReplacementDao().getByCar(currentCarId)
-            val existingTire = existingTires.find {
-                it.expenseId == expenseId
-            }
+            val existingTireForThisExpense = existingTires.find { it.expenseId == expenseId }
+            val replaceAllTires = binding.replaceAllTiresCheckBox.isChecked
 
-            if (existingTire != null) {
-                val updatedTire = existingTire.copy(
-                    tireType = tireType,
-                    brand = brand,
-                    model = model,
-                    size = size,
-                    installationDate = installationDate,
-                    installationMileage = installationMileage,
-                    expectedLifetimeYears = expectedYears,
-                    expectedLifetimeKm = expectedKm,
-                    isActive = true,
-                    expenseId = expenseId
-                )
-                database.tireReplacementDao().update(updatedTire)
-                val otherActiveTiresSameType = database.tireReplacementDao().getByCar(currentCarId)
-                    .filter { it.isActive && it.id != updatedTire.id && it.tireType == tireType }
-
-                otherActiveTiresSameType.forEach { tire ->
-                    database.tireReplacementDao().update(tire.copy(isActive = false))
-                }
-            } else if (tireType.isNotEmpty()) {
-                val replaceAllTires = binding.replaceAllTiresCheckBox.isChecked
-
+            if (existingTireForThisExpense != null) {
                 if (replaceAllTires) {
                     val activeTires = database.tireReplacementDao().getByCar(currentCarId)
                         .filter { it.isActive }
 
                     activeTires.forEach { tire ->
-                        database.tireReplacementDao().update(tire.copy(isActive = false))
+                        database.tireReplacementDao().update(
+                            tire.copy(
+                                isActive = false,
+                                notes = if (tire.notes.isNullOrEmpty()) "Заменены ${SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()).format(Date())} (редактирование)"
+                                else "${tire.notes}. Заменены ${SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()).format(Date())} (редактирование)"
+                            )
+                        )
+                    }
+                } else {
+                    val oldTiresSameType = database.tireReplacementDao().getByCar(currentCarId)
+                        .filter { it.isActive && it.tireType == tireType && it.id != existingTireForThisExpense.id }
+
+                    oldTiresSameType.forEach { oldTire ->
+                        database.tireReplacementDao().update(
+                            oldTire.copy(
+                                isActive = false,
+                                notes = if (oldTire.notes.isNullOrEmpty()) "Заменены ${SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()).format(Date())} (редактирование)"
+                                else "${oldTire.notes}. Заменены ${SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()).format(Date())} (редактирование)"
+                            )
+                        )
                     }
                 }
 
-                val tireReplacement = TireReplacement(
-                    carId = currentCarId,
+                val updatedTire = existingTireForThisExpense.copy(
                     tireType = tireType,
                     brand = brand,
                     model = model,
                     size = size,
                     installationDate = installationDate,
                     installationMileage = installationMileage,
-                    price = 0.0,
                     expectedLifetimeYears = expectedYears,
                     expectedLifetimeKm = expectedKm,
-                    isActive = true,
-                    expenseId = expenseId
+                    isActive = true
                 )
-                database.tireReplacementDao().insert(tireReplacement)
+
+                database.tireReplacementDao().update(updatedTire)
+
+            } else if (tireType.isNotEmpty()) {
+                if (replaceAllTires) {
+                    val activeTires = database.tireReplacementDao().getByCar(currentCarId)
+                        .filter { it.isActive }
+
+                    activeTires.forEach { tire ->
+                        database.tireReplacementDao().update(
+                            tire.copy(
+                                isActive = false,
+                                notes = if (tire.notes.isNullOrEmpty()) "Заменены ${SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()).format(Date())}"
+                                else "${tire.notes}. Заменены ${SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()).format(Date())}"
+                            )
+                        )
+                    }
+
+                    listOf("Зимняя", "Летняя").forEach { type ->
+                        val tireReplacement = TireReplacement(
+                            carId = currentCarId,
+                            tireType = type,
+                            brand = brand,
+                            model = model,
+                            size = size,
+                            installationDate = installationDate,
+                            installationMileage = installationMileage,
+                            price = 0.0,
+                            expectedLifetimeYears = expectedYears,
+                            expectedLifetimeKm = expectedKm,
+                            isActive = true,
+                            expenseId = if (type == tireType) expenseId else null
+                        )
+                        database.tireReplacementDao().insert(tireReplacement)
+                    }
+                } else {
+                    val oldTiresSameType = database.tireReplacementDao().getByCar(currentCarId)
+                        .filter { it.isActive && it.tireType == tireType }
+
+                    oldTiresSameType.forEach { oldTire ->
+                        database.tireReplacementDao().update(
+                            oldTire.copy(
+                                isActive = false,
+                                notes = if (oldTire.notes.isNullOrEmpty()) "Заменены ${SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()).format(Date())}"
+                                else "${oldTire.notes}. Заменены ${SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()).format(Date())}"
+                            )
+                        )
+                    }
+                    val tireReplacement = TireReplacement(
+                        carId = currentCarId,
+                        tireType = tireType,
+                        brand = brand,
+                        model = model,
+                        size = size,
+                        installationDate = installationDate,
+                        installationMileage = installationMileage,
+                        price = 0.0,
+                        expectedLifetimeYears = expectedYears,
+                        expectedLifetimeKm = expectedKm,
+                        isActive = true,
+                        expenseId = expenseId
+                    )
+                    database.tireReplacementDao().insert(tireReplacement)
+                }
+            }
+            val allTiresAfterUpdate = database.tireReplacementDao().getByCar(currentCarId)
+            android.util.Log.d("TireDebug", "=== После обновления шин ===")
+            allTiresAfterUpdate.forEach { tire ->
+                android.util.Log.d("TireDebug",
+                    "ID: ${tire.id}, Тип: ${tire.tireType}, Активна: ${tire.isActive}, expenseId: ${tire.expenseId}"
+                )
             }
         }
     }
