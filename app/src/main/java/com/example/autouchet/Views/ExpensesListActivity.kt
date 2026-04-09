@@ -13,8 +13,10 @@ import android.widget.TextView
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.autouchet.Controllers.CategoryController
 import com.example.autouchet.Controllers.ExpenseController
 import com.example.autouchet.Models.Expense
+import com.example.autouchet.Models.ExpenseCategory
 import com.example.autouchet.R
 import com.example.autouchet.Utils.SharedPrefsHelper
 import com.example.autouchet.databinding.ActivityExpensesListBinding
@@ -29,23 +31,21 @@ import java.util.*
 class ExpensesListActivity : AppCompatActivity() {
     private lateinit var binding: ActivityExpensesListBinding
     private lateinit var expenseController: ExpenseController
+    private lateinit var categoryController: CategoryController
     private val expenseAdapter = ExpenseAdapter()
     private val currencyFormat = NumberFormat.getCurrencyInstance().apply {
         maximumFractionDigits = 0
         currency = Currency.getInstance("RUB")
     }
-    private val monthFormat = SimpleDateFormat("LLLL yyyy", Locale.getDefault())
-    private val dateFormat = SimpleDateFormat("dd MMM", Locale.getDefault())
+    private val monthFormat = SimpleDateFormat("LLLL yyyy", Locale("ru"))
+    private val dateFormat = SimpleDateFormat("dd MMM", Locale("ru"))
 
     private var currentCarId: Int = -1
     private var currentDate = Calendar.getInstance()
     private var allExpenses = listOf<Expense>()
     private var filteredExpenses = listOf<Expense>()
-    private val categories = listOf(
-        "Топливо", "Обслуживание", "Ремонт", "Шины",
-        "Мойка", "Страховка", "Налоги", "Парковка",
-        "Штрафы", "Другое"
-    )
+    private var categoriesCache = listOf<ExpenseCategory>()
+    private var categoryNames = listOf<String>()
     private var searchQuery = ""
     private var selectedCategory = ""
     private var amountFrom: Double? = null
@@ -58,10 +58,12 @@ class ExpensesListActivity : AppCompatActivity() {
 
         currentCarId = SharedPrefsHelper.getCurrentCarId(this)
         expenseController = ExpenseController(this)
+        categoryController = CategoryController(this)
 
         setupUI()
         setupClickListeners()
         setupSearchAndFilters()
+        loadCategories()
 
         if (currentCarId != -1) {
             loadExpensesForMonth()
@@ -75,14 +77,24 @@ class ExpensesListActivity : AppCompatActivity() {
             layoutManager = LinearLayoutManager(this@ExpensesListActivity)
             adapter = expenseAdapter
         }
-        val categoryAdapter = ArrayAdapter(
-            this,
-            android.R.layout.simple_dropdown_item_1line,
-            listOf("Все категории") + categories
-        )
-        binding.categoryFilterAutoCompleteTextView.setAdapter(categoryAdapter)
 
         updateMonthTitle()
+    }
+
+    private fun loadCategories() {
+        CoroutineScope(Dispatchers.IO).launch {
+            categoriesCache = categoryController.getAllCategories()
+            categoryNames = listOf("Все категории") + categoriesCache.map { "${it.icon} ${it.name}" }
+
+            withContext(Dispatchers.Main) {
+                val categoryAdapter = ArrayAdapter(
+                    this@ExpensesListActivity,
+                    android.R.layout.simple_dropdown_item_1line,
+                    categoryNames
+                )
+                binding.categoryFilterAutoCompleteTextView.setAdapter(categoryAdapter)
+            }
+        }
     }
 
     private fun setupClickListeners() {
@@ -145,13 +157,20 @@ class ExpensesListActivity : AppCompatActivity() {
                 applyFilters()
             }
         })
+
         binding.categoryFilterAutoCompleteTextView.setOnItemClickListener { _, _, position, _ ->
-            selectedCategory = if (position == 0) "" else categories[position - 1]
+            selectedCategory = if (position == 0) {
+                ""
+            } else {
+                categoriesCache.getOrNull(position - 1)?.name ?: ""
+            }
         }
     }
 
     private fun updateMonthTitle() {
-        binding.currentMonthTextView.text = monthFormat.format(currentDate.time)
+        binding.currentMonthTextView.text = monthFormat.format(currentDate.time).replaceFirstChar {
+            if (it.isLowerCase()) it.titlecase(Locale("ru")) else it.toString()
+        }
     }
 
     private fun loadExpensesForMonth() {
@@ -199,7 +218,7 @@ class ExpensesListActivity : AppCompatActivity() {
 
     private fun clearFilters() {
         binding.searchEditText.text?.clear()
-        binding.categoryFilterAutoCompleteTextView.text?.clear()
+        binding.categoryFilterAutoCompleteTextView.setText("", false)
         binding.amountFromEditText.text?.clear()
         binding.amountToEditText.text?.clear()
 
@@ -267,10 +286,13 @@ class ExpensesListActivity : AppCompatActivity() {
 
     inner class ExpenseViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         fun bind(expense: Expense) {
+            val category = categoriesCache.find { it.name == expense.category }
+            val icon = category?.icon ?: getDefaultIcon(expense.category)
+
             itemView.findViewById<TextView>(R.id.dateTextView).text =
                 dateFormat.format(expense.date)
             itemView.findViewById<TextView>(R.id.categoryTextView).text =
-                "${expense.getCategoryIcon()} ${expense.category}"
+                "$icon ${expense.category}"
             itemView.findViewById<TextView>(R.id.amountTextView).text =
                 currencyFormat.format(expense.amount)
 
@@ -287,6 +309,21 @@ class ExpensesListActivity : AppCompatActivity() {
                     putExtra("expense_id", expense.id)
                 }
                 itemView.context.startActivity(intent)
+            }
+        }
+
+        private fun getDefaultIcon(category: String): String {
+            return when(category) {
+                "Топливо" -> "⛽"
+                "Обслуживание" -> "🔧"
+                "Шины" -> "🚗"
+                "Налоги" -> "💼"
+                "Страховка" -> "🛡️"
+                "Ремонт" -> "⚙️"
+                "Мойка" -> "🚿"
+                "Парковка" -> "🅿️"
+                "Штрафы" -> "📋"
+                else -> "💰"
             }
         }
     }

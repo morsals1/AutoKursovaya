@@ -10,6 +10,7 @@ import android.widget.TextView
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.autouchet.Controllers.CategoryController
 import com.example.autouchet.Controllers.ExpenseController
 import com.example.autouchet.Controllers.NotificationManager
 import com.example.autouchet.Models.AppDatabase
@@ -29,6 +30,7 @@ import java.util.*
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var expenseController: ExpenseController
+    private lateinit var categoryController: CategoryController
     private lateinit var notificationManager: NotificationManager
     private var currentCar: Car? = null
     private val expenseAdapter = ExpenseAdapter()
@@ -40,21 +42,26 @@ class MainActivity : AppCompatActivity() {
     private val monthFormat = SimpleDateFormat("LLLL yyyy", Locale.getDefault())
     private val dateFormat = SimpleDateFormat("dd MMM", Locale.getDefault())
 
+    private var categoriesCache = listOf<com.example.autouchet.Models.ExpenseCategory>()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         expenseController = ExpenseController(this)
+        categoryController = CategoryController(this)
         notificationManager = NotificationManager(this)
 
         setupUI()
+        loadCategories()
         loadData()
         setupClickListeners()
     }
 
     override fun onResume() {
         super.onResume()
+        loadCategories()
         loadData()
         checkReminders()
     }
@@ -87,6 +94,12 @@ class MainActivity : AppCompatActivity() {
                 }
                 else -> false
             }
+        }
+    }
+
+    private fun loadCategories() {
+        CoroutineScope(Dispatchers.IO).launch {
+            categoriesCache = categoryController.getAllCategories()
         }
     }
 
@@ -258,10 +271,13 @@ class MainActivity : AppCompatActivity() {
 
     inner class ExpenseViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         fun bind(expense: Expense) {
+            val category = categoriesCache.find { it.name == expense.category }
+            val icon = category?.icon ?: getDefaultIcon(expense.category)
+
             itemView.findViewById<TextView>(R.id.dateTextView).text =
                 dateFormat.format(expense.date)
             itemView.findViewById<TextView>(R.id.categoryTextView).text =
-                "${expense.getCategoryIcon()} ${expense.category}"
+                "$icon ${expense.category}"
             itemView.findViewById<TextView>(R.id.amountTextView).text =
                 currencyFormat.format(expense.amount)
 
@@ -277,6 +293,19 @@ class MainActivity : AppCompatActivity() {
                     putExtra("expense_id", expense.id)
                 }
                 itemView.context.startActivity(intent)
+            }
+        }
+
+        private fun getDefaultIcon(category: String): String {
+            return when(category) {
+                "Топливо" -> "⛽"
+                "Обслуживание" -> "🔧"
+                "Шины" -> "🚗"
+                "Налоги" -> "💼"
+                "Страховка" -> "🛡️"
+                "Ремонт" -> "⚙️"
+                "Мойка" -> "🚿"
+                else -> "💰"
             }
         }
     }

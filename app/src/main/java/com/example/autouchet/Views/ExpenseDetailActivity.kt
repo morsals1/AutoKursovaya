@@ -7,6 +7,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
+import com.example.autouchet.Controllers.CategoryController
 import com.example.autouchet.Models.AppDatabase
 import com.example.autouchet.R
 import com.example.autouchet.Utils.SharedPrefsHelper
@@ -22,6 +23,7 @@ import kotlin.math.max
 
 class ExpenseDetailActivity : AppCompatActivity() {
     private lateinit var binding: ActivityExpenseDetailBinding
+    private lateinit var categoryController: CategoryController
     private var expenseId: Int = -1
     private var currentCarId: Int = -1
     private var currentMileage: Int = 0
@@ -35,6 +37,8 @@ class ExpenseDetailActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityExpenseDetailBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        categoryController = CategoryController(this)
 
         expenseId = intent.getIntExtra("expense_id", -1)
         currentCarId = SharedPrefsHelper.getCurrentCarId(this)
@@ -73,15 +77,17 @@ class ExpenseDetailActivity : AppCompatActivity() {
             val database = AppDatabase.getDatabase(this@ExpenseDetailActivity)
             val expense = database.expenseDao().getById(expenseId)
             val car = database.carDao().getById(currentCarId)
+            val categories = categoryController.getAllCategories()
 
             car?.let {
                 currentMileage = it.currentMileage
             }
 
-            expense?.let {
+            expense?.let { exp ->
+                val category = categories.find { it.name == exp.category }
                 withContext(Dispatchers.Main) {
-                    displayExpenseData(it)
-                    if (it.category == "Шины") {
+                    displayExpenseData(exp, category)
+                    if (exp.category == "Шины") {
                         loadTireInfo(expenseId)
                     }
                 }
@@ -94,10 +100,10 @@ class ExpenseDetailActivity : AppCompatActivity() {
         }
     }
 
-    private fun displayExpenseData(expense: com.example.autouchet.Models.Expense) {
+    private fun displayExpenseData(expense: com.example.autouchet.Models.Expense, category: com.example.autouchet.Models.ExpenseCategory?) {
         binding.amountTextView.text = currencyFormat.format(expense.amount)
-        binding.categoryTextView.text = expense.category
-        binding.categoryTextView.setTextColor(expense.getCategoryColor())
+        binding.categoryTextView.text = "${category?.icon ?: "💰"} ${expense.category}"
+        binding.categoryTextView.setTextColor(category?.color ?: getDefaultCategoryColor(expense.category))
 
         binding.dateTextView.text = dateFormatDisplay.format(expense.date)
         binding.mileageTextView.text = "${String.format("%,d", expense.mileage)} км"
@@ -112,6 +118,19 @@ class ExpenseDetailActivity : AppCompatActivity() {
             binding.shopTextView.text = expense.shopName
         } else {
             binding.shopLayout.isVisible = false
+        }
+    }
+
+    private fun getDefaultCategoryColor(categoryName: String): Int {
+        return when(categoryName) {
+            "Топливо" -> getColor(R.color.green)
+            "Обслуживание" -> getColor(R.color.blue)
+            "Шины" -> getColor(R.color.orange)
+            "Налоги" -> getColor(R.color.red)
+            "Страховка" -> getColor(R.color.purple)
+            "Ремонт" -> getColor(R.color.brown)
+            "Мойка" -> getColor(R.color.cyan)
+            else -> getColor(R.color.gray)
         }
     }
 
@@ -257,20 +276,6 @@ class ExpenseDetailActivity : AppCompatActivity() {
     }
 
     private fun showDeleteConfirmation() {
-        androidx.appcompat.app.AlertDialog.Builder(this)
-            .setTitle("Удаление расхода")
-            .setMessage("Вы уверены, что хотите удалить этот расход?")
-            .setPositiveButton("Удалить") { dialog, _ ->
-                deleteExpense()
-                dialog.dismiss()
-            }
-            .setNegativeButton("Отмена") { dialog, _ ->
-                dialog.dismiss()
-            }
-            .show()
-    }
-
-    private fun deleteExpense() {
         androidx.appcompat.app.AlertDialog.Builder(this)
             .setTitle("Удаление расхода")
             .setMessage("Вы уверены, что хотите удалить этот расход?")

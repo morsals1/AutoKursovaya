@@ -7,8 +7,10 @@ import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.example.autouchet.Controllers.CategoryController
 import com.example.autouchet.Controllers.ExpenseController
 import com.example.autouchet.Models.AppDatabase
+import com.example.autouchet.Models.ExpenseCategory
 import com.example.autouchet.Models.TireReplacement
 import com.example.autouchet.R
 import com.example.autouchet.Utils.SharedPrefsHelper
@@ -23,17 +25,15 @@ import java.util.*
 class AddExpenseActivity : AppCompatActivity() {
     private lateinit var binding: ActivityAddExpenseBinding
     private lateinit var expenseController: ExpenseController
+    private lateinit var categoryController: CategoryController
     private var currentCarId: Int = -1
     private var currentMileage: Int = 0
     private var isEditMode: Boolean = false
     private var expenseToEditId: Int = -1
     private val dateFormatInput = SimpleDateFormat("dd.MM.yyyy", Locale.getDefault())
-
-    private val categories = listOf(
-        "Топливо", "Обслуживание", "Ремонт", "Шины",
-        "Мойка", "Страховка", "Налоги", "Парковка",
-        "Штрафы", "Другое"
-    )
+    private var categories = mutableListOf<ExpenseCategory>()
+    private var categoryNames = mutableListOf<String>()
+    private lateinit var categoryAdapter: ArrayAdapter<String>
 
     private val tireTypes = listOf("Зимняя", "Летняя", "Всесезонная")
 
@@ -43,6 +43,7 @@ class AddExpenseActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         expenseController = ExpenseController(this)
+        categoryController = CategoryController(this)
 
         isEditMode = intent.getBooleanExtra("edit_mode", false)
         expenseToEditId = intent.getIntExtra("expense_id", -1)
@@ -51,6 +52,7 @@ class AddExpenseActivity : AppCompatActivity() {
 
         setupUI()
         setupClickListeners()
+        loadCategories()
 
         if (currentCarId == -1) {
             Toast.makeText(this, "Сначала добавьте автомобиль", Toast.LENGTH_SHORT).show()
@@ -66,11 +68,7 @@ class AddExpenseActivity : AppCompatActivity() {
     }
 
     private fun setupUI() {
-        val categoryAdapter = ArrayAdapter(
-            this,
-            android.R.layout.simple_dropdown_item_1line,
-            categories
-        )
+        categoryAdapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, categoryNames)
         binding.categoryAutoCompleteTextView.setAdapter(categoryAdapter)
 
         val tireTypeAdapter = ArrayAdapter(
@@ -88,8 +86,33 @@ class AddExpenseActivity : AppCompatActivity() {
         if (isEditMode) {
             binding.saveButton.text = "ОБНОВИТЬ"
         }
+
         binding.dateEditText.setOnClickListener {
             showDatePicker()
+        }
+
+        binding.categoryAutoCompleteTextView.setOnItemClickListener { _, _, position, _ ->
+            val selectedCategory = categories.getOrNull(position)
+            selectedCategory?.let {
+                if (it.name == "Шины") {
+                    showTireTemplate()
+                } else {
+                    hideTireTemplate()
+                }
+            }
+        }
+    }
+
+    private fun loadCategories() {
+        CoroutineScope(Dispatchers.IO).launch {
+            val loadedCategories = categoryController.getAllCategories()
+            withContext(Dispatchers.Main) {
+                categories.clear()
+                categories.addAll(loadedCategories)
+                categoryNames.clear()
+                categoryNames.addAll(loadedCategories.map { "${it.icon} ${it.name}" })
+                categoryAdapter.notifyDataSetChanged()
+            }
         }
     }
 
@@ -151,7 +174,11 @@ class AddExpenseActivity : AppCompatActivity() {
             expense?.let {
                 withContext(Dispatchers.Main) {
                     binding.amountEditText.setText(String.format("%.2f", it.amount))
-                    binding.categoryAutoCompleteTextView.setText(it.category, false)
+
+                    val category = categories.find { c -> c.name == it.category }
+                    val displayText = category?.let { c -> "${c.icon} ${c.name}" } ?: it.category
+                    binding.categoryAutoCompleteTextView.setText(displayText, false)
+
                     binding.dateEditText.setText(dateFormatInput.format(it.date))
                     binding.mileageEditText.setText(it.mileage.toString())
                     binding.shopNameEditText.setText(it.shopName)
@@ -199,18 +226,19 @@ class AddExpenseActivity : AppCompatActivity() {
             }
         }
 
-        binding.categoryAutoCompleteTextView.setOnItemClickListener { _, _, position, _ ->
-            val selectedCategory = categories[position]
-            if (selectedCategory == "Шины") {
-                showTireTemplate()
-            } else {
-                hideTireTemplate()
-            }
-        }
-
         binding.createReminderCheckBox.setOnCheckedChangeListener { _, isChecked ->
             binding.reminderLayout.visibility = if (isChecked) View.VISIBLE else View.GONE
         }
+
+        binding.manageCategoriesButton.setOnClickListener {
+            val intent = Intent(this, CategoriesActivity::class.java)
+            startActivity(intent)
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        loadCategories()
     }
 
     private fun showTireTemplate() {
@@ -223,6 +251,12 @@ class AddExpenseActivity : AppCompatActivity() {
         binding.replaceAllTiresCheckBox.visibility = View.GONE
     }
 
+    private fun getSelectedCategory(): String {
+        val selectedText = binding.categoryAutoCompleteTextView.text.toString()
+        val category = categories.find { "${it.icon} ${it.name}" == selectedText }
+        return category?.name ?: selectedText
+    }
+
     private fun saveExpense() {
         if (currentCarId == -1) {
             Toast.makeText(this, "Ошибка: автомобиль не выбран", Toast.LENGTH_SHORT).show()
@@ -230,7 +264,7 @@ class AddExpenseActivity : AppCompatActivity() {
         }
 
         val amountText = binding.amountEditText.text.toString()
-        val category = binding.categoryAutoCompleteTextView.text.toString().trim()
+        val category = getSelectedCategory()
         val mileageText = binding.mileageEditText.text.toString()
         val dateText = binding.dateEditText.text.toString()
 
@@ -342,92 +376,29 @@ class AddExpenseActivity : AppCompatActivity() {
 
         if (tireType.isEmpty()) {
             Toast.makeText(this, "Выберите тип резины", Toast.LENGTH_SHORT).show()
-            binding.tireTypeAutoCompleteTextView.requestFocus()
-            return false
-        }
-
-        if (!tireTypes.contains(tireType)) {
-            Toast.makeText(this, "Выберите тип резины из списка", Toast.LENGTH_SHORT).show()
-            binding.tireTypeAutoCompleteTextView.requestFocus()
             return false
         }
 
         if (brand.isEmpty()) {
             Toast.makeText(this, "Введите марку шин", Toast.LENGTH_SHORT).show()
-            binding.tireBrandEditText.requestFocus()
-            return false
-        }
-
-        if (brand.length < 2) {
-            Toast.makeText(this, "Марка должна содержать минимум 2 символа", Toast.LENGTH_SHORT).show()
-            binding.tireBrandEditText.requestFocus()
             return false
         }
 
         if (size.isEmpty()) {
             Toast.makeText(this, "Введите размер шин", Toast.LENGTH_SHORT).show()
-            binding.tireSizeEditText.requestFocus()
-            return false
-        }
-
-        if (!size.matches(Regex("""^\d{3}/\d{2}\s*[Rr]\d{2}.*"""))) {
-            Toast.makeText(this, "Введите корректный размер (например: 195/65 R15)", Toast.LENGTH_SHORT).show()
-            binding.tireSizeEditText.requestFocus()
-            return false
-        }
-
-        if (expectedYearsText.isEmpty()) {
-            Toast.makeText(this, "Введите ожидаемый срок службы в годах", Toast.LENGTH_SHORT).show()
-            binding.tireExpectedYearsEditText.requestFocus()
             return false
         }
 
         val expectedYears = expectedYearsText.toIntOrNull()
         if (expectedYears == null || expectedYears < 1 || expectedYears > 10) {
             Toast.makeText(this, "Срок службы должен быть от 1 до 10 лет", Toast.LENGTH_SHORT).show()
-            binding.tireExpectedYearsEditText.requestFocus()
-            return false
-        }
-
-        if (expectedKmText.isEmpty()) {
-            Toast.makeText(this, "Введите ожидаемый пробег", Toast.LENGTH_SHORT).show()
-            binding.tireExpectedKmEditText.requestFocus()
             return false
         }
 
         val expectedKm = expectedKmText.toIntOrNull()
         if (expectedKm == null || expectedKm < 1000 || expectedKm > 100000) {
             Toast.makeText(this, "Ожидаемый пробег должен быть от 1000 до 100000 км", Toast.LENGTH_SHORT).show()
-            binding.tireExpectedKmEditText.requestFocus()
             return false
-        }
-
-        if (binding.createReminderCheckBox.isChecked) {
-            val reminderYearsText = binding.reminderYearsEditText.text.toString()
-            val reminderKmText = binding.reminderKmEditText.text.toString()
-
-            if (reminderYearsText.isEmpty() && reminderKmText.isEmpty()) {
-                Toast.makeText(this, "Заполните хотя бы одно поле для напоминания", Toast.LENGTH_SHORT).show()
-                return false
-            }
-
-            if (reminderYearsText.isNotEmpty()) {
-                val reminderYears = reminderYearsText.toIntOrNull()
-                if (reminderYears == null || reminderYears < 1 || reminderYears > 10) {
-                    Toast.makeText(this, "Напоминание по годам должно быть от 1 до 10 лет", Toast.LENGTH_SHORT).show()
-                    binding.reminderYearsEditText.requestFocus()
-                    return false
-                }
-            }
-
-            if (reminderKmText.isNotEmpty()) {
-                val reminderKm = reminderKmText.toIntOrNull()
-                if (reminderKm == null || reminderKm < 1000 || reminderKm > 100000) {
-                    Toast.makeText(this, "Напоминание по пробегу должно быть от 1000 до 100000 км", Toast.LENGTH_SHORT).show()
-                    binding.reminderKmEditText.requestFocus()
-                    return false
-                }
-            }
         }
 
         return true
@@ -460,9 +431,7 @@ class AddExpenseActivity : AppCompatActivity() {
                         )
                     }
 
-                    val tireTypesToCreate = if (replaceAllTires) listOf("Зимняя", "Летняя") else listOf(tireType)
-
-                    tireTypesToCreate.forEach { type ->
+                    listOf("Зимняя", "Летняя").forEach { type ->
                         val tireReplacement = TireReplacement(
                             carId = currentCarId,
                             tireType = type,
@@ -477,7 +446,6 @@ class AddExpenseActivity : AppCompatActivity() {
                             isActive = true,
                             expenseId = if (type == tireType) expenseId else null
                         )
-
                         database.tireReplacementDao().insert(tireReplacement)
                     }
                 } else {
@@ -507,18 +475,7 @@ class AddExpenseActivity : AppCompatActivity() {
                         isActive = true,
                         expenseId = expenseId
                     )
-
                     database.tireReplacementDao().insert(tireReplacement)
-                }
-
-                val allTires = database.tireReplacementDao().getByCar(currentCarId)
-                android.util.Log.d("TireDebug", "=== Состояние шин после сохранения ===")
-                allTires.forEach { tire ->
-                    android.util.Log.d("TireDebug",
-                        "ID: ${tire.id}, Тип: ${tire.tireType}, Активна: ${tire.isActive}, " +
-                                "Дата установки: ${SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()).format(tire.installationDate)}, " +
-                                "expenseId: ${tire.expenseId}"
-                    )
                 }
             }
         }
@@ -574,7 +531,6 @@ class AddExpenseActivity : AppCompatActivity() {
                     targetMileage = targetMileage,
                     isCompleted = false
                 )
-
                 database.reminderDao().insert(reminder)
             }
         }
@@ -587,7 +543,7 @@ class AddExpenseActivity : AppCompatActivity() {
         }
 
         val amountText = binding.amountEditText.text.toString()
-        val category = binding.categoryAutoCompleteTextView.text.toString().trim()
+        val category = getSelectedCategory()
         val mileageText = binding.mileageEditText.text.toString()
         val dateText = binding.dateEditText.text.toString()
 
@@ -607,16 +563,6 @@ class AddExpenseActivity : AppCompatActivity() {
         }
         if (mileage < 0) {
             Toast.makeText(this, "Пробег не может быть отрицательным", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        if (shopName.length > 50) {
-            Toast.makeText(this, "Название магазина не более 50 символов", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        if (comment.length > 100) {
-            Toast.makeText(this, "Комментарий не более 100 символов", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -817,13 +763,6 @@ class AddExpenseActivity : AppCompatActivity() {
                     )
                     database.tireReplacementDao().insert(tireReplacement)
                 }
-            }
-            val allTiresAfterUpdate = database.tireReplacementDao().getByCar(currentCarId)
-            android.util.Log.d("TireDebug", "=== После обновления шин ===")
-            allTiresAfterUpdate.forEach { tire ->
-                android.util.Log.d("TireDebug",
-                    "ID: ${tire.id}, Тип: ${tire.tireType}, Активна: ${tire.isActive}, expenseId: ${tire.expenseId}"
-                )
             }
         }
     }
