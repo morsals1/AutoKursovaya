@@ -2,6 +2,7 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("kotlin-kapt")
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -107,4 +108,18 @@ dependencies {
 
     // CSV экспорт
     implementation("com.opencsv:opencsv:5.8")
+
+    // Firebase BoM - обновленная версия
+    implementation(platform("com.google.firebase:firebase-bom:33.1.0"))
+
+    // Firebase Authentication
+    implementation("com.google.firebase:firebase-auth-ktx")
+
+    // Firebase Firestore
+    implementation("com.google.firebase:firebase-firestore-ktx")
+
+    // Coroutines для Firebase
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
+
 }
+apply(plugin = "com.google.gms.google-services")

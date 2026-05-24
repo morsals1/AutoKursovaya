@@ -6,6 +6,9 @@ import android.content.SharedPreferences
 object SharedPrefsHelper {
     private const val PREFS_NAME = "AutoUchetPrefs"
     private const val KEY_CURRENT_CAR_ID = "current_car_id"
+    private const val KEY_USER_UID = "user_uid"
+    private const val KEY_GROUP_ID = "group_id"
+    private const val KEY_IS_LOGGED_IN = "is_logged_in"
 
     fun getCurrentCarId(context: Context): Int {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -15,5 +18,40 @@ object SharedPrefsHelper {
     fun setCurrentCarId(context: Context, carId: Int) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         prefs.edit().putInt(KEY_CURRENT_CAR_ID, carId).apply()
+    }
+
+    fun getUserUid(context: Context): String? {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        return prefs.getString(KEY_USER_UID, null)
+    }
+
+    fun setUserUid(context: Context, uid: String) {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        prefs.edit().putString(KEY_USER_UID, uid).apply()
+    }
+
+    fun getGroupId(context: Context): String? {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        return prefs.getString(KEY_GROUP_ID, null)
+    }
+
+    fun setGroupId(context: Context, groupId: String) {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        prefs.edit().putString(KEY_GROUP_ID, groupId).apply()
+    }
+
+    fun isLoggedIn(context: Context): Boolean {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        return prefs.getBoolean(KEY_IS_LOGGED_IN, false)
+    }
+
+    fun setLoggedIn(context: Context, loggedIn: Boolean) {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        prefs.edit().putBoolean(KEY_IS_LOGGED_IN, loggedIn).apply()
+    }
+
+    fun clearAll(context: Context) {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        prefs.edit().clear().apply()
     }
 }

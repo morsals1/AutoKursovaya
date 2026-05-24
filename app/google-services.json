@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "859850073871",
+    "project_id": "autouchet-49109",
+    "storage_bucket": "autouchet-49109.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:859850073871:android:fac418e502c55cc554807a",
+        "android_client_info": {
+          "package_name": "com.example.autouchet"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCf8ofhUdwd0gN_Gvehy30LbezMJfXedmk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -14,6 +14,7 @@ import com.example.autouchet.Models.ExpenseCategory
 import com.example.autouchet.Models.TireReplacement
 import com.example.autouchet.R
 import com.example.autouchet.Utils.SharedPrefsHelper
+import com.example.autouchet.Controllers.SyncController
 import com.example.autouchet.databinding.ActivityAddExpenseBinding
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -21,6 +22,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.*
+
 
 class AddExpenseActivity : AppCompatActivity() {
     private lateinit var binding: ActivityAddExpenseBinding
@@ -352,6 +354,18 @@ class AddExpenseActivity : AppCompatActivity() {
                     saveTireInfo(expenseId, selectedDate, mileage)
                     if (binding.createReminderCheckBox.isChecked) {
                         createTireReminder(selectedDate, mileage, expenseId)
+                    }
+                }
+
+                CoroutineScope(Dispatchers.IO).launch {
+                    val groupId = SharedPrefsHelper.getGroupId(this@AddExpenseActivity)
+                    if (groupId != null) {
+                        val syncController = SyncController(this@AddExpenseActivity)
+                        val database = AppDatabase.getDatabase(this@AddExpenseActivity)
+                        val expense = database.expenseDao().getById(expenseId)
+                        if (expense != null) {
+                            syncController.syncExpense(expense, groupId)
+                        }
                     }
                 }
             }

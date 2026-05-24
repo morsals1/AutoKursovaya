@@ -7,42 +7,117 @@
     android:layout_height="match_parent"
     android:background="@color/background">
 
+    <LinearLayout
+        android:id="@+id/headerLayout"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingStart="16dp"
+        android:paddingEnd="8dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="4dp"
+        android:gravity="center_vertical"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="АвтоУчёт"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/groupManagementButton"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:text="Семья"
+            android:textSize="13sp"
+            app:icon="@drawable/ic_group"
+            app:iconSize="18dp"
+            app:iconGravity="textStart"
+            app:cornerRadius="20dp"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:textColor="@color/text_secondary"
+            android:paddingStart="12dp"
+            android:paddingEnd="8dp"
+            android:layout_marginEnd="8dp"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/logoutButton"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:text="Выйти"
+            android:textSize="13sp"
+            app:icon="@drawable/ic_logout"
+            app:iconSize="18dp"
+            app:iconGravity="textStart"
+            app:cornerRadius="20dp"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:textColor="@color/text_secondary"
+            android:paddingStart="12dp"
+            android:paddingEnd="16dp"/>
+
+
+
+    </LinearLayout>
+
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/carInfoCard"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="8dp"
         android:layout_marginBottom="4dp"
         app:cardCornerRadius="12dp"
+        app:cardElevation="2dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintTop_toBottomOf="@id/headerLayout">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="16dp">
+            android:orientation="horizontal"
+            android:padding="16dp"
+            android:gravity="center_vertical">
 
-            <TextView
-                android:id="@+id/carNameTextView"
-                android:layout_width="match_parent"
+            <LinearLayout
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="Volkswagen Golf 2018"
-                android:textSize="20sp"
-                android:textStyle="bold"
-                android:textColor="@color/text_primary"/>
+                android:layout_weight="1"
+                android:orientation="vertical">
 
-            <TextView
-                android:id="@+id/currentMileageTextView"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Текущий пробег: 85 430 км"
-                android:textSize="14sp"
-                android:textColor="@color/text_secondary"
-                android:layout_marginTop="4dp"/>
+                <TextView
+                    android:id="@+id/carNameTextView"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Volkswagen Golf 2018"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_primary"/>
+
+                <TextView
+                    android:id="@+id/currentMileageTextView"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Текущий пробег: 85 430 км"
+                    android:textSize="13sp"
+                    android:textColor="@color/text_secondary"
+                    android:layout_marginTop="2dp"/>
+
+            </LinearLayout>
+
+            <ImageView
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@drawable/ic_car"
+                android:contentDescription="Автомобиль"
+                app:tint="@color/primary"/>
 
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
@@ -56,6 +131,7 @@
         android:layout_marginTop="8dp"
         android:layout_marginBottom="4dp"
         app:cardCornerRadius="12dp"
+        app:cardElevation="2dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/carInfoCard">
@@ -71,7 +147,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Сентябрь 2026"
-                android:textSize="18sp"
+                android:textSize="16sp"
                 android:textStyle="bold"
                 android:textColor="@color/text_primary"/>
 
@@ -80,35 +156,37 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="24 850 ₽"
-                android:textSize="24sp"
+                android:textSize="28sp"
                 android:textStyle="bold"
                 android:textColor="@color/primary"
                 android:layout_marginTop="8dp"/>
 
-            <TextView
-                android:id="@+id/monthComparisonTextView"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="▼12% к прошлому месяцу"
-                android:textSize="14sp"
-                android:textColor="@color/green"
-                android:layout_marginTop="4dp"/>
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginTop="4dp">
 
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:background="@color/divider"
-                android:layout_marginTop="16dp"
-                android:layout_marginBottom="8dp"/>
+                <TextView
+                    android:id="@+id/monthComparisonTextView"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="▼12% к прошлому месяцу"
+                    android:textSize="13sp"
+                    android:textColor="@color/green"/>
 
-            <TextView
-                android:id="@+id/economyTextView"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="🏆 ЭКОНОМИЯ: -2 300 ₽"
-                android:textSize="16sp"
-                android:textColor="@color/green"
-                android:textStyle="bold"/>
+                <TextView
+                    android:id="@+id/economyTextView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🏆 -2 300 ₽"
+                    android:textSize="13sp"
+                    android:textColor="@color/green"
+                    android:textStyle="bold"/>
+
+            </LinearLayout>
 
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
@@ -122,6 +200,7 @@
         android:layout_marginTop="8dp"
         android:layout_marginBottom="15dp"
         app:cardCornerRadius="12dp"
+        app:cardElevation="2dp"
         app:layout_constraintBottom_toTopOf="@id/bottomNavigation"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -137,10 +216,12 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="ПОСЛЕДНИЕ ОПЕРАЦИИ"
-                android:textSize="14sp"
+                android:textSize="13sp"
                 android:textColor="@color/text_secondary"
                 android:gravity="center"
-                android:padding="16dp"/>
+                android:padding="12dp"
+                android:background="@color/divider"
+                android:alpha="0.5"/>
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recentExpensesRecyclerView"

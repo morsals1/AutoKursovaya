@@ -1,6 +1,7 @@
 package com.example.autouchet.Views
 
 import android.content.Intent
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -12,6 +13,8 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.autouchet.Controllers.CategoryController
 import com.example.autouchet.Controllers.ExpenseController
+import com.example.autouchet.Controllers.FirebaseController
+import com.example.autouchet.Controllers.SyncController
 import com.example.autouchet.Controllers.NotificationManager
 import com.example.autouchet.Models.AppDatabase
 import com.example.autouchet.Models.Car
@@ -27,6 +30,7 @@ import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.*
 
+
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var expenseController: ExpenseController
@@ -39,8 +43,8 @@ class MainActivity : AppCompatActivity() {
         currency = Currency.getInstance("RUB")
     }
 
-    private val monthFormat = SimpleDateFormat("LLLL yyyy", Locale.getDefault())
-    private val dateFormat = SimpleDateFormat("dd MMM", Locale.getDefault())
+    private val monthFormat = SimpleDateFormat("LLLL yyyy", Locale("ru"))
+    private val dateFormat = SimpleDateFormat("dd MMM", Locale("ru"))
 
     private var categoriesCache = listOf<com.example.autouchet.Models.ExpenseCategory>()
 
@@ -48,6 +52,12 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        if (!SharedPrefsHelper.isLoggedIn(this)) {
+            startActivity(Intent(this, AuthActivity::class.java))
+            finish()
+            return
+        }
 
         expenseController = ExpenseController(this)
         categoryController = CategoryController(this)
@@ -57,13 +67,35 @@ class MainActivity : AppCompatActivity() {
         loadCategories()
         loadData()
         setupClickListeners()
+        initializeCloudSync()
     }
 
     override fun onResume() {
         super.onResume()
+        if (!SharedPrefsHelper.isLoggedIn(this)) {
+            startActivity(Intent(this, AuthActivity::class.java))
+            finish()
+            return
+        }
         loadCategories()
         loadData()
         checkReminders()
+    }
+
+    private fun initializeCloudSync() {
+        val groupId = SharedPrefsHelper.getGroupId(this)
+        if (groupId == null) {
+            CoroutineScope(Dispatchers.IO).launch {
+                val firebaseController = FirebaseController()
+                val carId = SharedPrefsHelper.getCurrentCarId(this@MainActivity)
+                if (carId != -1) {
+                    val result = firebaseController.createCarGroup(carId)
+                    result.onSuccess { (newGroupId, inviteCode) ->
+                        SharedPrefsHelper.setGroupId(this@MainActivity, newGroupId)
+                    }
+                }
+            }
+        }
     }
 
     private fun setupUI() {
@@ -95,6 +127,33 @@ class MainActivity : AppCompatActivity() {
                 else -> false
             }
         }
+
+        binding.logoutButton.setOnClickListener {
+            showLogoutConfirmation()
+        }
+
+        binding.groupManagementButton.setOnClickListener {
+            startActivity(Intent(this, GroupManagementActivity::class.java))
+        }
+    }
+
+    private fun showLogoutConfirmation() {
+        AlertDialog.Builder(this)
+            .setTitle("Выход из аккаунта")
+            .setMessage("Вы уверены, что хотите выйти из аккаунта? Все локальные данные будут сохранены.")
+            .setPositiveButton("Выйти") { _, _ -> performLogout() }
+            .setNegativeButton("Отмена", null)
+            .show()
+    }
+
+    private fun performLogout() {
+        val firebaseController = FirebaseController()
+        firebaseController.logout()
+        SharedPrefsHelper.clearAll(this)
+        val intent = Intent(this, AuthActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        startActivity(intent)
+        finish()
     }
 
     private fun loadCategories() {
@@ -106,7 +165,6 @@ class MainActivity : AppCompatActivity() {
     private fun loadData() {
         CoroutineScope(Dispatchers.IO).launch {
             val database = AppDatabase.getDatabase(this@MainActivity)
-
             val currentCarId = SharedPrefsHelper.getCurrentCarId(this@MainActivity)
 
             if (currentCarId != -1) {
@@ -160,7 +218,7 @@ class MainActivity : AppCompatActivity() {
     private fun updateCarInfo() {
         currentCar?.let { car ->
             binding.carNameTextView.text = car.getFullName()
-            binding.currentMileageTextView.text = "Текущий пробег: ${car.currentMileage} км"
+            binding.currentMileageTextView.text = "Текущий пробег: ${String.format("%,d", car.currentMileage)} км"
         }
     }
 
@@ -184,17 +242,19 @@ class MainActivity : AppCompatActivity() {
                 val previousMonthExpenses = expenseController.getPreviousMonthExpensesSync(car.id)
 
                 withContext(Dispatchers.Main) {
-                    binding.monthTitleTextView.text = monthFormat.format(Date())
+                    binding.monthTitleTextView.text = monthFormat.format(Date()).replaceFirstChar {
+                        if (it.isLowerCase()) it.titlecase(Locale("ru")) else it.toString()
+                    }
 
                     binding.totalExpensesTextView.text = currencyFormat.format(monthlyExpenses ?: 0.0)
 
                     val economy = (previousMonthExpenses ?: 0.0) - (monthlyExpenses ?: 0.0)
                     val economyText = if (economy > 0) {
-                        "🏆 ЭКОНОМИЯ: +${currencyFormat.format(economy)}"
+                        "🏆 -${currencyFormat.format(economy)}"
                     } else if (economy < 0) {
-                        "📈 ПЕРЕРАСХОД: ${currencyFormat.format(-economy)}"
+                        "📈 +${currencyFormat.format(-economy)}"
                     } else {
-                        "⚖ В ПРЕДЕЛАХ НОРМЫ"
+                        "⚖ 0 ₽"
                     }
 
                     binding.economyTextView.text = economyText
