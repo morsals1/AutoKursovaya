@@ -30,4 +30,10 @@ interface TireReplacementDao {
 
     @Query("SELECT * FROM tire_replacements WHERE carId = :carId AND installationMileage = :mileage ORDER BY installationDate DESC LIMIT 1")
     suspend fun getByMileage(carId: Int, mileage: Int): TireReplacement?
+
+    @Query("SELECT * FROM tire_replacements WHERE cloudId = :cloudId LIMIT 1")
+    suspend fun getByCloudId(cloudId: String): TireReplacement?
+
+    @Query("SELECT * FROM tire_replacements WHERE isDeleted = 0")
+    suspend fun getAllActive(): List<TireReplacement>
 }

@@ -20,7 +20,10 @@ data class Reminder(
     val createdDate: Date = Date(),
     val notifyDaysBefore: Int = 7,
     val notifyKmBefore: Int = 500,
-    val note: String = ""
+    val note: String = "",
+    var cloudId: String = "",
+    val updatedAt: Long = System.currentTimeMillis(),
+    val isDeleted: Boolean = false
 ) {
     fun getStatus(currentMileage: Int, currentDate: Date): String {
         if (isCompleted) return "Выполнено"

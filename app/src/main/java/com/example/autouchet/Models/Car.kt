@@ -15,7 +15,10 @@ data class Car(
     val region: String,
     var currentMileage: Int,
     val averageConsumption: Double = 8.5,
-    val createdAt: Date = Date()
+    val createdAt: Date = Date(),
+    var cloudId: String = "",
+    val updatedAt: Long = System.currentTimeMillis(),
+    val isDeleted: Boolean = false
 ) {
     fun getFullName(): String = "$brand $model ($year)"
 }

@@ -12,5 +12,8 @@ data class ExpenseCategory(
     val color: Int,
     val isDefault: Boolean = false,
     val sortOrder: Int = 0,
-    val createdAt: Long = System.currentTimeMillis()
+    val createdAt: Long = System.currentTimeMillis(),
+    var cloudId: String = "",
+    val updatedAt: Long = System.currentTimeMillis(),
+    val isDeleted: Boolean = false
 )

@@ -14,6 +14,7 @@ import com.example.autouchet.Models.AppDatabase
 import com.example.autouchet.Models.Car
 import com.example.autouchet.Models.Expense
 import com.example.autouchet.databinding.ActivityCarSettingsBinding
+import com.example.autouchet.Utils.SharedPrefsHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -24,14 +25,8 @@ import java.util.*
 
 class CarSettingsActivity : AppCompatActivity() {
     private lateinit var binding: ActivityCarSettingsBinding
-    private lateinit var sharedPreferences: SharedPreferences
     private var currentCarId: Int = -1
     private var isEditingExisting = false
-
-    companion object {
-        private const val PREFS_NAME = "AutoUchetPrefs"
-        private const val KEY_CURRENT_CAR_ID = "current_car_id"
-    }
 
     private val getContent = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let { importBackup(it) }
@@ -42,10 +37,10 @@ class CarSettingsActivity : AppCompatActivity() {
         binding = ActivityCarSettingsBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        sharedPreferences = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+        // Получаем carId из разных источников
         currentCarId = intent.getIntExtra("CURRENT_CAR_ID", -1)
         if (currentCarId == -1) {
-            currentCarId = sharedPreferences.getInt(KEY_CURRENT_CAR_ID, -1)
+            currentCarId = SharedPrefsHelper.getCurrentCarId(this)
         }
 
         setupUI()
@@ -123,40 +118,64 @@ class CarSettingsActivity : AppCompatActivity() {
             ).show()
             return
         }
-        val horsepower = 0
 
         val car = Car(
             id = if (isEditingExisting) currentCarId else 0,
             brand = brand,
             model = model,
             year = year,
-            horsepower = horsepower,
+            horsepower = 0,
             region = "",
             currentMileage = mileage
         )
 
         CoroutineScope(Dispatchers.IO).launch {
             val database = AppDatabase.getDatabase(this@CarSettingsActivity)
+            var savedCarId = currentCarId
 
-            if (isEditingExisting && currentCarId != -1) {
-                database.carDao().update(car)
-                sharedPreferences.edit().putInt(KEY_CURRENT_CAR_ID, car.id).apply()
-            } else {
-                val newId = database.carDao().insert(car).toInt()
-                if (sharedPreferences.getInt(KEY_CURRENT_CAR_ID, -1) == -1) {
-                    sharedPreferences.edit().putInt(KEY_CURRENT_CAR_ID, newId).apply()
+            try {
+                if (isEditingExisting && currentCarId != -1) {
+                    // Обновляем существующий автомобиль
+                    database.carDao().update(car)
+                } else {
+                    // Добавляем новый автомобиль
+                    val newId = database.carDao().insert(car).toInt()
+                    savedCarId = newId
+                }
+
+                // ВАЖНО: Сохраняем ID автомобиля и устанавливаем флаг hasCar
+                SharedPrefsHelper.setCurrentCarId(this@CarSettingsActivity, savedCarId)
+                // setCurrentCarId уже вызывает setHasCar(true), но для надежности:
+                SharedPrefsHelper.setHasCar(this@CarSettingsActivity, true)
+
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(
+                        this@CarSettingsActivity,
+                        if (isEditingExisting) "Данные автомобиля обновлены" else "Автомобиль добавлен",
+                        Toast.LENGTH_SHORT
+                    ).show()
+
+                    // Возвращаемся на главный экран
+                    navigateToMainScreen()
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(
+                        this@CarSettingsActivity,
+                        "Ошибка сохранения: ${e.message}",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
-
-            withContext(Dispatchers.Main) {
-                Toast.makeText(
-                    this@CarSettingsActivity,
-                    if (isEditingExisting) "Данные автомобиля обновлены" else "Автомобиль добавлен",
-                    Toast.LENGTH_SHORT
-                ).show()
-                finish()
-            }
         }
+    }
+
+    private fun navigateToMainScreen() {
+        val intent = Intent(this, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+        startActivity(intent)
+        finish()
     }
 
     private fun showAddCarDialog() {
@@ -205,7 +224,7 @@ class CarSettingsActivity : AppCompatActivity() {
                     .setTitle("Выберите автомобиль")
                     .setItems(carNames) { _, which ->
                         val selectedCar = cars[which]
-                        sharedPreferences.edit().putInt(KEY_CURRENT_CAR_ID, selectedCar.id).apply()
+                        SharedPrefsHelper.setCurrentCarId(this@CarSettingsActivity, selectedCar.id)
                         loadCarIntoForm(selectedCar)
                     }
                     .setNegativeButton("Отмена", null)

@@ -30,4 +30,10 @@ interface CategoryDao {
 
     @Query("SELECT * FROM categories WHERE name LIKE '%' || :query || '%'")
     suspend fun search(query: String): List<ExpenseCategory>
+
+    @Query("SELECT * FROM categories WHERE cloudId = :cloudId LIMIT 1")
+    suspend fun getByCloudId(cloudId: String): ExpenseCategory?
+
+    @Query("SELECT * FROM categories WHERE isDeleted = 0 ORDER BY sortOrder ASC, name ASC")
+    suspend fun getAllActive(): List<ExpenseCategory>
 }

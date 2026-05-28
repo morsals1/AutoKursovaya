@@ -12,8 +12,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @Database(
-    entities = [Car::class, Expense::class, TireReplacement::class, Reminder::class, ExpenseCategory::class],
-    version = 4,
+    entities = [Car::class, Expense::class, TireReplacement::class, Reminder::class, ExpenseCategory::class, PendingSyncEntity::class],
+    version = 5,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -23,6 +23,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun tireReplacementDao(): TireReplacementDao
     abstract fun reminderDao(): ReminderDao
     abstract fun categoryDao(): CategoryDao
+    abstract fun pendingSyncDao(): PendingSyncDao
 
     companion object {
         @Volatile
@@ -35,24 +36,13 @@ abstract class AppDatabase : RoomDatabase() {
                     database.execSQL("ALTER TABLE reminders ADD COLUMN notifyDaysBefore INTEGER DEFAULT 7")
                     database.execSQL("ALTER TABLE reminders ADD COLUMN notifyKmBefore INTEGER DEFAULT 500")
                     database.execSQL("ALTER TABLE reminders ADD COLUMN note TEXT DEFAULT ''")
-                } catch (e: Exception) {
-                }
+                } catch (e: Exception) {}
             }
         }
 
         private val MIGRATION_2_3 = object : Migration(2, 3) {
             override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL("""
-                    CREATE TABLE IF NOT EXISTS categories (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-                        name TEXT NOT NULL,
-                        icon TEXT NOT NULL,
-                        color INTEGER NOT NULL,
-                        isDefault INTEGER NOT NULL DEFAULT 0,
-                        sortOrder INTEGER NOT NULL DEFAULT 0,
-                        createdAt INTEGER NOT NULL
-                    )
-                """)
+                database.execSQL("""CREATE TABLE IF NOT EXISTS categories (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, name TEXT NOT NULL, icon TEXT NOT NULL, color INTEGER NOT NULL, isDefault INTEGER NOT NULL DEFAULT 0, sortOrder INTEGER NOT NULL DEFAULT 0, createdAt INTEGER NOT NULL)""")
             }
         }
 
@@ -62,21 +52,37 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE expenses ADD COLUMN cloudId TEXT NOT NULL DEFAULT ''")
+                database.execSQL("ALTER TABLE expenses ADD COLUMN updatedAt INTEGER NOT NULL DEFAULT 0")
+                database.execSQL("ALTER TABLE expenses ADD COLUMN isDeleted INTEGER NOT NULL DEFAULT 0")
+                database.execSQL("ALTER TABLE cars ADD COLUMN cloudId TEXT NOT NULL DEFAULT ''")
+                database.execSQL("ALTER TABLE cars ADD COLUMN updatedAt INTEGER NOT NULL DEFAULT 0")
+                database.execSQL("ALTER TABLE cars ADD COLUMN isDeleted INTEGER NOT NULL DEFAULT 0")
+                database.execSQL("ALTER TABLE reminders ADD COLUMN cloudId TEXT NOT NULL DEFAULT ''")
+                database.execSQL("ALTER TABLE reminders ADD COLUMN updatedAt INTEGER NOT NULL DEFAULT 0")
+                database.execSQL("ALTER TABLE reminders ADD COLUMN isDeleted INTEGER NOT NULL DEFAULT 0")
+                database.execSQL("ALTER TABLE categories ADD COLUMN cloudId TEXT NOT NULL DEFAULT ''")
+                database.execSQL("ALTER TABLE categories ADD COLUMN updatedAt INTEGER NOT NULL DEFAULT 0")
+                database.execSQL("ALTER TABLE categories ADD COLUMN isDeleted INTEGER NOT NULL DEFAULT 0")
+                database.execSQL("ALTER TABLE tire_replacements ADD COLUMN cloudId TEXT NOT NULL DEFAULT ''")
+                database.execSQL("ALTER TABLE tire_replacements ADD COLUMN updatedAt INTEGER NOT NULL DEFAULT 0")
+                database.execSQL("ALTER TABLE tire_replacements ADD COLUMN isDeleted INTEGER NOT NULL DEFAULT 0")
+                database.execSQL("""CREATE TABLE IF NOT EXISTS pending_sync (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, entityType TEXT NOT NULL, entityId INTEGER NOT NULL, operation TEXT NOT NULL, createdAt INTEGER NOT NULL)""")
+            }
+        }
+
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
-                val instance = Room.databaseBuilder(
-                    context.applicationContext,
-                    AppDatabase::class.java,
-                    "autouchet_database"
-                )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+                val instance = Room.databaseBuilder(context.applicationContext, AppDatabase::class.java, "autouchet_database")
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
                     .addCallback(object : RoomDatabase.Callback() {
                         override fun onCreate(db: SupportSQLiteDatabase) {
                             super.onCreate(db)
                             CoroutineScope(Dispatchers.IO).launch {
                                 val database = getDatabase(context)
                                 val categoryDao = database.categoryDao()
-
                                 val defaultCategories = listOf(
                                     ExpenseCategory(name = "Топливо", icon = "⛽", color = 0xFF4CAF50.toInt(), isDefault = true, sortOrder = 0),
                                     ExpenseCategory(name = "Обслуживание", icon = "🔧", color = 0xFF2196F3.toInt(), isDefault = true, sortOrder = 1),
@@ -89,14 +95,10 @@ abstract class AppDatabase : RoomDatabase() {
                                     ExpenseCategory(name = "Штрафы", icon = "📋", color = 0xFFFF5722.toInt(), isDefault = true, sortOrder = 8),
                                     ExpenseCategory(name = "Прочее", icon = "💰", color = 0xFF9E9E9E.toInt(), isDefault = true, sortOrder = 9)
                                 )
-
-                                defaultCategories.forEach { category ->
-                                    categoryDao.insert(category)
-                                }
+                                defaultCategories.forEach { category -> categoryDao.insert(category) }
                             }
                         }
                     })
-                    .fallbackToDestructiveMigration()
                     .build()
                 INSTANCE = instance
                 instance

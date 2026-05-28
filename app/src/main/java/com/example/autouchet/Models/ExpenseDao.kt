@@ -43,6 +43,21 @@ interface ExpenseDao {
 
     @Query("SELECT * FROM expenses")
     suspend fun getAll(): List<Expense>
+
+    @Query("SELECT * FROM expenses WHERE cloudId = :cloudId LIMIT 1")
+    suspend fun getByCloudId(cloudId: String): Expense?
+
+    @Query("SELECT * FROM expenses WHERE updatedAt > :timestamp AND isDeleted = 0")
+    suspend fun getUpdatedAfter(timestamp: Long): List<Expense>
+
+    @Query("SELECT * FROM expenses WHERE isDeleted = 0")
+    suspend fun getAllActive(): List<Expense>
+
+    @Query("SELECT * FROM expenses WHERE carId = :carId AND amount = :amount AND category = :category AND date = :date AND mileage = :mileage AND comment = :comment LIMIT 1")
+    suspend fun findDuplicate(carId: Int, amount: Double, category: String, date: Long, mileage: Int, comment: String): Expense?
+
+    @Query("SELECT COUNT(*) FROM expenses WHERE cloudId = :cloudId")
+    suspend fun countByCloudId(cloudId: String): Int
 }
 
 data class CategoryTotal(

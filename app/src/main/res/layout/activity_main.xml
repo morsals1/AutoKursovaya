@@ -7,6 +7,7 @@
     android:layout_height="match_parent"
     android:background="@color/background">
 
+    <!-- Заголовок -->
     <LinearLayout
         android:id="@+id/headerLayout"
         android:layout_width="0dp"
@@ -61,10 +62,9 @@
             android:paddingStart="12dp"
             android:paddingEnd="16dp"/>
 
-
-
     </LinearLayout>
 
+    <!-- Карточка информации об автомобиле -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/carInfoCard"
         android:layout_width="0dp"
@@ -122,6 +122,7 @@
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
+    <!-- Карточка статистики за месяц -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/monthStatsCard"
         android:layout_width="0dp"
@@ -191,6 +192,7 @@
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
+    <!-- Карточка последних расходов -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/recentExpensesCard"
         android:layout_width="0dp"
@@ -241,6 +243,7 @@
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
+    <!-- Нижняя навигация -->
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomNavigation"
         android:layout_width="match_parent"
@@ -248,6 +251,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:menu="@menu/bottom_navigation_menu"/>
 
+    <!-- FAB кнопка -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/addExpenseFab"
         android:layout_width="wrap_content"
@@ -258,6 +262,7 @@
         app:layout_constraintBottom_toTopOf="@id/bottomNavigation"
         app:layout_constraintEnd_toEndOf="parent"/>
 
+    <!-- Состояние "Пусто" -->
     <LinearLayout
         android:id="@+id/emptyStateLayout"
         android:layout_width="0dp"
@@ -272,13 +277,16 @@
         app:layout_constraintTop_toTopOf="parent">
 
         <ImageView
+            android:id="@+id/emptyStateIcon"
             android:layout_width="120dp"
             android:layout_height="120dp"
             android:src="@drawable/ic_car_empty"
             android:layout_marginBottom="24dp"
             android:contentDescription="Иконка автомобиля"/>
 
+        <!-- Добавлены ID -->
         <TextView
+            android:id="@+id/emptyStateText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Добавьте ваш первый автомобиль"
@@ -286,7 +294,9 @@
             android:textStyle="bold"
             android:textColor="@color/text_primary"/>
 
+        <!-- Добавлены ID -->
         <TextView
+            android:id="@+id/emptyStateSubtext"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Начните отслеживать расходы на авто"

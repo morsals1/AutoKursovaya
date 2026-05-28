@@ -17,5 +17,8 @@ data class Expense(
     val comment: String = "",
     val shopName: String = "",
     val receiptScanned: Boolean = false,
-    val createdByReceipt: Boolean = false
+    val createdByReceipt: Boolean = false,
+    var cloudId: String = "",
+    val updatedAt: Long = System.currentTimeMillis(),
+    val isDeleted: Boolean = false
 )

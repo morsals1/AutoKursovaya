@@ -13,12 +13,14 @@ interface ReminderDao {
     @Delete
     suspend fun delete(reminder: Reminder)
 
+    @Query("SELECT * FROM reminders")
+    suspend fun getAll(): List<Reminder>
+
     @Query("SELECT * FROM reminders WHERE carId = :carId AND isCompleted = 0 ORDER BY targetDate ASC")
     suspend fun getActiveByCar(carId: Int): List<Reminder>
 
     @Query("SELECT * FROM reminders WHERE carId = :carId ORDER BY createdDate DESC")
     suspend fun getAllByCar(carId: Int): List<Reminder>
-
 
     @Query("SELECT * FROM reminders WHERE carId = :carId AND isCompleted = 1 ORDER BY completedDate DESC")
     suspend fun getCompletedByCar(carId: Int): List<Reminder>
@@ -49,4 +51,10 @@ interface ReminderDao {
 
     @Query("SELECT * FROM reminders WHERE carId = :carId AND isCompleted = 0 AND (targetDate <= :date OR targetMileage <= :mileage)")
     suspend fun getOverdueReminders(carId: Int, date: Long, mileage: Int): List<Reminder>
+
+    @Query("SELECT * FROM reminders WHERE cloudId = :cloudId LIMIT 1")
+    suspend fun getByCloudId(cloudId: String): Reminder?
+
+    @Query("SELECT * FROM reminders WHERE isDeleted = 0")
+    suspend fun getAllActive(): List<Reminder>
 }
