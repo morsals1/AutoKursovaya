@@ -514,14 +514,6 @@ class MainActivity : AppCompatActivity() {
                     delay(1000)
                 }
 
-                // Синхронизируем категории
-                val categories = db.categoryDao().getAll()
-                for (category in categories) {
-                    if (category.cloudId.isEmpty()) {
-                        syncController?.syncCategory(category)
-                    }
-                }
-
                 // Синхронизируем все остальные данные
                 Log.d("MainActivity", "Syncing all local data to cloud...")
                 syncController?.syncAllLocalToCloud()
@@ -781,6 +773,19 @@ class MainActivity : AppCompatActivity() {
             itemView.findViewById<TextView>(R.id.categoryTextView).text = e.category
             itemView.findViewById<TextView>(R.id.amountTextView).text = currencyFormat.format(e.amount)
             itemView.findViewById<TextView>(R.id.dateTextView).text = dateFormat.format(e.date)
+
+            // Отображаем магазин и комментарий как в ExpenseDetailActivity
+            val commentTextView = itemView.findViewById<TextView>(R.id.commentTextView)
+
+            if (e.shopName.isNotEmpty() && e.comment.isNotEmpty()) {
+                commentTextView.text = "${e.shopName}, ${e.comment}"
+            } else if (e.shopName.isNotEmpty()) {
+                commentTextView.text = e.shopName
+            } else if (e.comment.isNotEmpty()) {
+                commentTextView.text = e.comment
+            } else {
+                commentTextView.text = ""
+            }
         }
     }
 

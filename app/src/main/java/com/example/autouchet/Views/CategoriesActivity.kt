@@ -4,6 +4,7 @@ import android.graphics.Color
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.Log
 import android.view.*
 import android.widget.*
 import androidx.appcompat.app.AlertDialog
@@ -12,8 +13,11 @@ import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.autouchet.Controllers.CategoryController
+import com.example.autouchet.Controllers.SyncController
+import com.example.autouchet.Models.AppDatabase
 import com.example.autouchet.Models.ExpenseCategory
 import com.example.autouchet.R
+import com.example.autouchet.Utils.SharedPrefsHelper
 import com.example.autouchet.databinding.ActivityCategoriesBinding
 import com.example.autouchet.databinding.DialogAddCategoryBinding
 import com.google.android.material.snackbar.Snackbar
@@ -234,20 +238,50 @@ class CategoriesActivity : AppCompatActivity() {
             .setTitle("Удалить категорию")
             .setMessage("Вы уверены, что хотите удалить категорию \"${category.name}\"?")
             .setPositiveButton("Удалить") { _, _ ->
-                CoroutineScope(Dispatchers.IO).launch {
-                    val success = categoryController.deleteCategory(category.id)
-                    withContext(Dispatchers.Main) {
-                        if (success) {
-                            loadCategories()
-                            Snackbar.make(binding.root, "Категория удалена", Snackbar.LENGTH_SHORT).show()
-                        } else {
-                            Snackbar.make(binding.root, "Не удалось удалить категорию", Snackbar.LENGTH_SHORT).show()
-                        }
-                    }
-                }
+                deleteCategoryWithSync(category)
             }
             .setNegativeButton("Отмена", null)
             .show()
+    }
+
+    private fun deleteCategoryWithSync(category: ExpenseCategory) {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val database = AppDatabase.getDatabase(this@CategoriesActivity)
+                val categoryToDelete = database.categoryDao().getById(category.id)
+
+                if (categoryToDelete == null || categoryToDelete.isDefault) {
+                    withContext(Dispatchers.Main) {
+                        Snackbar.make(binding.root, "Нельзя удалить эту категорию", Snackbar.LENGTH_SHORT).show()
+                    }
+                    return@launch
+                }
+
+                // Удаляем локально
+                database.categoryDao().delete(categoryToDelete)
+
+                // Синхронизируем удаление с Firebase
+                if (categoryToDelete.cloudId.isNotEmpty()) {
+                    val syncController = SyncController(this@CategoriesActivity)
+                    val groupId = SharedPrefsHelper.getGroupId(this@CategoriesActivity)
+                    if (groupId != null) {
+                        syncController.setGroupId(groupId)
+                        syncController.deleteCategory(categoryToDelete)
+                    }
+                }
+
+                withContext(Dispatchers.Main) {
+                    loadCategories()
+                    Snackbar.make(binding.root, "Категория удалена", Snackbar.LENGTH_SHORT).show()
+                }
+
+            } catch (e: Exception) {
+                Log.e("CategoriesActivity", "Error deleting category: ${e.message}")
+                withContext(Dispatchers.Main) {
+                    Snackbar.make(binding.root, "Ошибка удаления", Snackbar.LENGTH_SHORT).show()
+                }
+            }
+        }
     }
 
     private fun setupIconSelector(dialogBinding: DialogAddCategoryBinding) {

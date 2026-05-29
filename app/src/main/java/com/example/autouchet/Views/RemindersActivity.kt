@@ -21,6 +21,7 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.autouchet.Controllers.SyncController
 import com.example.autouchet.Models.AppDatabase
 import com.example.autouchet.Models.Reminder
 import com.example.autouchet.R
@@ -546,24 +547,33 @@ class RemindersActivity : AppCompatActivity() {
         )
 
         CoroutineScope(Dispatchers.IO).launch {
-            val database = AppDatabase.getDatabase(this@RemindersActivity)
-            val newId = database.reminderDao().insert(reminder).toInt()
+            try {
+                val database = AppDatabase.getDatabase(this@RemindersActivity)
+                val newId = database.reminderDao().insert(reminder).toInt()
 
-            withContext(Dispatchers.Main) {
-                Toast.makeText(this@RemindersActivity, "Напоминание создано", Toast.LENGTH_SHORT).show()
+                // Синхронизируем новое напоминание
+                val savedReminder = database.reminderDao().getById(newId)
+                if (savedReminder != null) {
+                    val syncController = SyncController(this@RemindersActivity)
+                    val groupId = SharedPrefsHelper.getGroupId(this@RemindersActivity)
+                    if (groupId != null) {
+                        syncController.setGroupId(groupId)
+                        syncController.syncReminder(savedReminder)
+                    }
+                }
 
-                binding.titleEditText.text?.clear()
-                binding.typeAutoCompleteTextView.text?.clear()
-                binding.mileageEditText.text?.clear()
-                binding.periodEditText.text?.clear()
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@RemindersActivity, "Напоминание создано", Toast.LENGTH_SHORT).show()
 
-                loadReminders()
+                    binding.titleEditText.text?.clear()
+                    binding.typeAutoCompleteTextView.text?.clear()
+                    binding.mileageEditText.text?.clear()
+                    binding.periodEditText.text?.clear()
 
-                showNotification(
-                    newId,
-                    "Создано напоминание",
-                    "$title\n${if (targetDate != null) "На ${dateFormatDisplay.format(targetDate)}" else "По пробегу"}"
-                )
+                    loadReminders()
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("RemindersActivity", "Error creating reminder: ${e.message}")
             }
         }
     }
@@ -578,30 +588,63 @@ class RemindersActivity : AppCompatActivity() {
         )
 
         CoroutineScope(Dispatchers.IO).launch {
-            val database = AppDatabase.getDatabase(this@RemindersActivity)
-            database.reminderDao().update(updatedReminder)
+            try {
+                val database = AppDatabase.getDatabase(this@RemindersActivity)
+                database.reminderDao().update(updatedReminder)
 
-            withContext(Dispatchers.Main) {
-                Toast.makeText(this@RemindersActivity, "Напоминание отмечено как выполненное", Toast.LENGTH_SHORT).show()
-                loadReminders()
+                // Синхронизируем обновление с Firebase
+                if (updatedReminder.cloudId.isNotEmpty()) {
+                    val syncController = SyncController(this@RemindersActivity)
+                    val groupId = SharedPrefsHelper.getGroupId(this@RemindersActivity)
+                    if (groupId != null) {
+                        syncController.setGroupId(groupId)
+                        syncController.syncReminder(updatedReminder)
+                    }
+                }
+
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@RemindersActivity, "Напоминание отмечено как выполненное", Toast.LENGTH_SHORT).show()
+                    loadReminders()
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("RemindersActivity", "Error completing reminder: ${e.message}")
             }
         }
     }
-
     private fun deleteReminder(reminder: Reminder) {
+        // Отменяем уведомления
         cancelReminderNotifications(reminder.id)
 
         CoroutineScope(Dispatchers.IO).launch {
-            val database = AppDatabase.getDatabase(this@RemindersActivity)
-            database.reminderDao().delete(reminder)
+            try {
+                val database = AppDatabase.getDatabase(this@RemindersActivity)
 
-            withContext(Dispatchers.Main) {
-                Toast.makeText(this@RemindersActivity, "Напоминание удалено", Toast.LENGTH_SHORT).show()
-                loadReminders()
+                // Удаляем локально
+                database.reminderDao().delete(reminder)
+
+                // Синхронизируем удаление с Firebase
+                if (reminder.cloudId.isNotEmpty()) {
+                    val syncController = com.example.autouchet.Controllers.SyncController(this@RemindersActivity)
+                    val groupId = com.example.autouchet.Utils.SharedPrefsHelper.getGroupId(this@RemindersActivity)
+                    if (groupId != null) {
+                        syncController.setGroupId(groupId)
+                        syncController.deleteReminder(reminder)
+                    }
+                }
+
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@RemindersActivity, "Напоминание удалено", Toast.LENGTH_SHORT).show()
+                    loadReminders()
+                }
+
+            } catch (e: Exception) {
+                android.util.Log.e("RemindersActivity", "Error deleting reminder: ${e.message}")
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@RemindersActivity, "Ошибка удаления", Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }
-
     private fun postponeReminderByWeek(reminder: Reminder) {
         if (reminder.type != "date") return
 
@@ -617,12 +660,26 @@ class RemindersActivity : AppCompatActivity() {
         val updatedReminder = reminder.copy(targetDate = newDate)
 
         CoroutineScope(Dispatchers.IO).launch {
-            val database = AppDatabase.getDatabase(this@RemindersActivity)
-            database.reminderDao().update(updatedReminder)
+            try {
+                val database = AppDatabase.getDatabase(this@RemindersActivity)
+                database.reminderDao().update(updatedReminder)
 
-            withContext(Dispatchers.Main) {
-                Toast.makeText(this@RemindersActivity, "Напоминание отложено на неделю", Toast.LENGTH_SHORT).show()
-                loadReminders()
+                // Синхронизируем с Firebase
+                if (updatedReminder.cloudId.isNotEmpty()) {
+                    val syncController = SyncController(this@RemindersActivity)
+                    val groupId = SharedPrefsHelper.getGroupId(this@RemindersActivity)
+                    if (groupId != null) {
+                        syncController.setGroupId(groupId)
+                        syncController.syncReminder(updatedReminder)
+                    }
+                }
+
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@RemindersActivity, "Напоминание отложено на неделю", Toast.LENGTH_SHORT).show()
+                    loadReminders()
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("RemindersActivity", "Error postponing reminder: ${e.message}")
             }
         }
     }

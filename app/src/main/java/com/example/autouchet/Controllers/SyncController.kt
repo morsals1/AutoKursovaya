@@ -327,6 +327,129 @@ class SyncController(private val context: Context) {
         }
     }
 
+    fun deleteReminder(reminder: Reminder) {
+
+        val gId = groupId ?: return
+
+        syncScope.launch {
+
+            try {
+
+                if (!isNetworkAvailable()) {
+
+                    database.pendingSyncDao().insert(
+                        PendingSyncEntity(
+                            entityType = "reminder",
+                            entityId = reminder.id,
+                            operation = "delete",
+                            cloudId = reminder.cloudId
+                        )
+                    )
+
+                    return@launch
+                }
+
+                firebaseController.deleteReminderByCloudId(
+                    reminder.cloudId,
+                    gId
+                )
+
+            } catch (e: Exception) {
+
+                database.pendingSyncDao().insert(
+                    PendingSyncEntity(
+                        entityType = "reminder",
+                        entityId = reminder.id,
+                        operation = "delete",
+                        cloudId = reminder.cloudId
+                    )
+                )
+            }
+        }
+    }
+
+    fun deleteExpense(expense: Expense) {
+
+        val gId = groupId ?: return
+
+        syncScope.launch {
+
+            try {
+
+                if (!isNetworkAvailable()) {
+
+                    database.pendingSyncDao().insert(
+                        PendingSyncEntity(
+                            entityType = "expense",
+                            entityId = expense.id,
+                            operation = "delete",
+                            cloudId = expense.cloudId
+                        )
+                    )
+
+                    return@launch
+                }
+
+                firebaseController.deleteExpenseByCloudId(
+                    expense.cloudId,
+                    gId
+                )
+
+            } catch (e: Exception) {
+
+                database.pendingSyncDao().insert(
+                    PendingSyncEntity(
+                        entityType = "expense",
+                        entityId = expense.id,
+                        operation = "delete",
+                        cloudId = expense.cloudId
+                    )
+                )
+            }
+        }
+    }
+
+    fun deleteCategory(category: ExpenseCategory) {
+
+        val gId = groupId ?: return
+
+        syncScope.launch {
+
+            try {
+
+                if (!isNetworkAvailable()) {
+
+                    database.pendingSyncDao().insert(
+                        PendingSyncEntity(
+                            entityType = "category",
+                            entityId = category.id,
+                            operation = "delete",
+                            cloudId = category.cloudId
+                        )
+                    )
+
+                    return@launch
+                }
+
+                firebaseController.deleteCategoryByCloudId(
+                    category.cloudId,
+                    gId
+                )
+
+            } catch (e: Exception) {
+
+                database.pendingSyncDao().insert(
+                    PendingSyncEntity(
+                        entityType = "category",
+                        entityId = category.id,
+                        operation = "delete",
+                        cloudId = category.cloudId
+                    )
+                )
+            }
+        }
+    }
+
     suspend fun syncAllLocalToCloud() {
         val gId = groupId ?: return
         if (!isNetworkAvailable()) return
@@ -345,11 +468,10 @@ class SyncController(private val context: Context) {
                             )
                         )
                     }
-                    delay(100) // Небольшая задержка между запросами
+                    delay(100)
                 }
             }
 
-            // Аналогично для остальных сущностей...
             val cars = database.carDao().getAllActive()
             for (car in cars) {
                 if (car.cloudId.isEmpty()) {
@@ -362,14 +484,24 @@ class SyncController(private val context: Context) {
                 }
             }
 
-            val categories = database.categoryDao().getAllActive()
+            val categories = database.categoryDao().getAll()
+
             for (category in categories) {
+
                 if (category.cloudId.isEmpty()) {
-                    firebaseController.syncCategoryToCloud(category, gId).onSuccess { cloudId ->
-                        database.categoryDao().update(
-                            category.copy(cloudId = cloudId, updatedAt = System.currentTimeMillis())
-                        )
-                    }
+
+                    firebaseController
+                        .syncCategoryToCloud(category, gId)
+                        .onSuccess { cloudId ->
+
+                            database.categoryDao().update(
+                                category.copy(
+                                    cloudId = cloudId,
+                                    updatedAt = System.currentTimeMillis()
+                                )
+                            )
+                        }
+
                     delay(100)
                 }
             }
@@ -421,29 +553,42 @@ class SyncController(private val context: Context) {
 
                         "expense" -> {
 
-                            val expense =
-                                database.expenseDao()
-                                    .getById(item.entityId)
+                            if (item.operation == "delete") {
 
-                            if (expense != null) {
+                                if (item.cloudId.isNotEmpty()) {
 
-                                val result =
-                                    firebaseController
-                                        .syncExpenseToCloud(
-                                            expense,
-                                            groupId!!
-                                        )
+                                    firebaseController.deleteExpenseByCloudId(
+                                        item.cloudId,
+                                        groupId!!
+                                    )
+                                }
 
-                                result.onSuccess { cloudId ->
+                            } else {
 
-                                    if (expense.cloudId.isEmpty()) {
+                                val expense =
+                                    database.expenseDao()
+                                        .getById(item.entityId)
 
-                                        database.expenseDao().update(
-                                            expense.copy(
-                                                cloudId = cloudId,
-                                                updatedAt = System.currentTimeMillis()
+                                if (expense != null) {
+
+                                    val result =
+                                        firebaseController
+                                            .syncExpenseToCloud(
+                                                expense,
+                                                groupId!!
                                             )
-                                        )
+
+                                    result.onSuccess { cloudId ->
+
+                                        if (expense.cloudId.isEmpty()) {
+
+                                            database.expenseDao().update(
+                                                expense.copy(
+                                                    cloudId = cloudId,
+                                                    updatedAt = System.currentTimeMillis()
+                                                )
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -481,29 +626,42 @@ class SyncController(private val context: Context) {
 
                         "category" -> {
 
-                            val category =
-                                database.categoryDao()
-                                    .getById(item.entityId)
+                            if (item.operation == "delete") {
 
-                            if (category != null) {
+                                if (item.cloudId.isNotEmpty()) {
 
-                                val result =
-                                    firebaseController
-                                        .syncCategoryToCloud(
-                                            category,
-                                            groupId!!
-                                        )
+                                    firebaseController.deleteCategoryByCloudId(
+                                        item.cloudId,
+                                        groupId!!
+                                    )
+                                }
 
-                                result.onSuccess { cloudId ->
+                            } else {
 
-                                    if (category.cloudId.isEmpty()) {
+                                val category =
+                                    database.categoryDao()
+                                        .getById(item.entityId)
 
-                                        database.categoryDao().update(
-                                            category.copy(
-                                                cloudId = cloudId,
-                                                updatedAt = System.currentTimeMillis()
+                                if (category != null) {
+
+                                    val result =
+                                        firebaseController
+                                            .syncCategoryToCloud(
+                                                category,
+                                                groupId!!
                                             )
-                                        )
+
+                                    result.onSuccess { cloudId ->
+
+                                        if (category.cloudId.isEmpty()) {
+
+                                            database.categoryDao().update(
+                                                category.copy(
+                                                    cloudId = cloudId,
+                                                    updatedAt = System.currentTimeMillis()
+                                                )
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -511,29 +669,42 @@ class SyncController(private val context: Context) {
 
                         "reminder" -> {
 
-                            val reminder =
-                                database.reminderDao()
-                                    .getById(item.entityId)
+                            if (item.operation == "delete") {
 
-                            if (reminder != null) {
+                                if (item.cloudId.isNotEmpty()) {
 
-                                val result =
-                                    firebaseController
-                                        .syncReminderToCloud(
-                                            reminder,
-                                            groupId!!
-                                        )
+                                    firebaseController.deleteReminderByCloudId(
+                                        item.cloudId,
+                                        groupId!!
+                                    )
+                                }
 
-                                result.onSuccess { cloudId ->
+                            } else {
 
-                                    if (reminder.cloudId.isEmpty()) {
+                                val reminder =
+                                    database.reminderDao()
+                                        .getById(item.entityId)
 
-                                        database.reminderDao().update(
-                                            reminder.copy(
-                                                cloudId = cloudId,
-                                                updatedAt = System.currentTimeMillis()
+                                if (reminder != null) {
+
+                                    val result =
+                                        firebaseController
+                                            .syncReminderToCloud(
+                                                reminder,
+                                                groupId!!
                                             )
-                                        )
+
+                                    result.onSuccess { cloudId ->
+
+                                        if (reminder.cloudId.isEmpty()) {
+
+                                            database.reminderDao().update(
+                                                reminder.copy(
+                                                    cloudId = cloudId,
+                                                    updatedAt = System.currentTimeMillis()
+                                                )
+                                            )
+                                        }
                                     }
                                 }
                             }

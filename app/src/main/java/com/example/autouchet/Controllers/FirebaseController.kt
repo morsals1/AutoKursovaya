@@ -98,6 +98,50 @@ class FirebaseController {
         }
     }
 
+    suspend fun deleteReminderByCloudId(
+        cloudId: String,
+        groupId: String
+    ) {
+        firestore
+            .collection("carGroups")
+            .document(groupId)
+            .collection("reminders")
+            .document(cloudId)
+            .delete()
+            .await()
+    }
+
+    suspend fun deleteExpenseByCloudId(
+        cloudId: String,
+        groupId: String
+    ) {
+
+        firestore
+            .collection("carGroups")
+            .document(groupId)
+            .collection("expenses")
+            .document(cloudId)
+            .delete()
+            .await()
+    }
+
+    suspend fun deleteCategoryByCloudId(
+        cloudId: String,
+        groupId: String
+    ) {
+        try {
+            firestore
+                .collection("carGroups")
+                .document(groupId)
+                .collection("categories")
+                .document(cloudId)
+                .delete()
+                .await()
+        } catch (e: Exception) {
+            Log.e("FirebaseController", "Error deleting category: ${e.message}")
+        }
+    }
+
     suspend fun createCarGroup(carId: Int): Result<Pair<String, String>> {
         return try {
             val uid = getCurrentUserId() ?: throw Exception("Not authenticated")
@@ -356,7 +400,7 @@ class FirebaseController {
 
             if (!duplicateCheck.isEmpty) {
                 val existingDoc = duplicateCheck.documents.first()
-                // Обновляем существующий документ
+                // Обновляем существующий документ вместо создания нового
                 firestore.collection(path)
                     .document(existingDoc.id)
                     .update(mapOf<String, Any>(
@@ -377,7 +421,7 @@ class FirebaseController {
                 "color" to category.color,
                 "isDefault" to category.isDefault,
                 "sortOrder" to category.sortOrder,
-                "createdAt" to category.createdAt,
+                "createdAt" to System.currentTimeMillis(),
                 "createdBy" to uid,
                 "updatedAt" to System.currentTimeMillis(),
                 "isDeleted" to false
@@ -694,7 +738,6 @@ class FirebaseController {
         val currentUserId = getCurrentUserId()
 
         return firestore.collection(path)
-            .whereEqualTo("isDeleted", false)
             .addSnapshotListener { snapshot, error ->
                 if (error != null || snapshot == null) return@addSnapshotListener
 
@@ -712,7 +755,7 @@ class FirebaseController {
                             val isDefault = doc.getBoolean("isDefault") ?: false
                             val sortOrder = doc.getLong("sortOrder")?.toInt() ?: 0
 
-                            // Пропускаем удаленные
+                            // Если документ удален в Firebase
                             if (isDeleted) {
                                 if (existingByCloudId != null) {
                                     database.categoryDao().delete(existingByCloudId)
@@ -741,9 +784,7 @@ class FirebaseController {
                             val existingByName = database.categoryDao().getByName(name)
 
                             if (existingByName != null) {
-                                // Категория с таким именем уже есть
                                 if (existingByName.cloudId.isEmpty()) {
-                                    // Обновляем cloudId у существующей
                                     database.categoryDao().update(
                                         existingByName.copy(
                                             cloudId = cloudId,
@@ -753,7 +794,6 @@ class FirebaseController {
                                         )
                                     )
                                 } else if (existingByName.cloudId == cloudId) {
-                                    // Та же категория - обновляем данные
                                     if (updatedAt > existingByName.updatedAt) {
                                         database.categoryDao().update(
                                             existingByName.copy(
@@ -765,13 +805,12 @@ class FirebaseController {
                                         )
                                     }
                                 }
-                                // Если existingByName.cloudId != cloudId - это разные категории с одинаковым именем, игнорируем
                                 continue
                             }
 
                             // Пропускаем свои недавние изменения
                             val createdBy = doc.getString("createdBy")
-                            if (createdBy == currentUserId && System.currentTimeMillis() - updatedAt < 5000) {
+                            if (createdBy == currentUserId && System.currentTimeMillis() - updatedAt < 10000) {
                                 continue
                             }
 

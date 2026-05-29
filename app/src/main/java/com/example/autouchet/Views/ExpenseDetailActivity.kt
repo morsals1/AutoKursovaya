@@ -2,6 +2,7 @@ package com.example.autouchet.Views
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -291,24 +292,47 @@ class ExpenseDetailActivity : AppCompatActivity() {
 
     private fun performDelete() {
         CoroutineScope(Dispatchers.IO).launch {
-            val database = AppDatabase.getDatabase(this@ExpenseDetailActivity)
-            val expense = database.expenseDao().getById(expenseId)
+            try {
+                val database = AppDatabase.getDatabase(this@ExpenseDetailActivity)
+                val expense = database.expenseDao().getById(expenseId)
 
-            expense?.let { exp ->
-                database.expenseDao().delete(exp)
+                if (expense == null) {
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(this@ExpenseDetailActivity, "Расход не найден", Toast.LENGTH_SHORT).show()
+                        finish()
+                    }
+                    return@launch
+                }
 
-                if (exp.category == "Шины") {
+                // Удаляем локально
+                database.expenseDao().delete(expense)
+
+                // Синхронизируем удаление с Firebase
+                if (expense.cloudId.isNotEmpty()) {
+                    val syncController = com.example.autouchet.Controllers.SyncController(this@ExpenseDetailActivity)
+                    val groupId = com.example.autouchet.Utils.SharedPrefsHelper.getGroupId(this@ExpenseDetailActivity)
+                    if (groupId != null) {
+                        syncController.setGroupId(groupId)
+                        syncController.deleteExpense(expense)
+                    }
+                }
+
+                // Обработка шин если нужно
+                if (expense.category == "Шины") {
                     val tires = database.tireReplacementDao().getByCar(currentCarId)
                     val tireForThisExpense = tires.find { it.expenseId == expenseId }
                     tireForThisExpense?.let { tire ->
                         database.tireReplacementDao().update(
                             tire.copy(
                                 isActive = false,
-                                notes = if (tire.notes.isNullOrEmpty()) "Удалены ${SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()).format(Date())}"
-                                else "${tire.notes}. Удалены ${SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()).format(Date())}"
+                                notes = if (tire.notes.isNullOrEmpty())
+                                    "Удалены ${SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()).format(Date())}"
+                                else
+                                    "${tire.notes}. Удалены ${SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()).format(Date())}"
                             )
                         )
                     }
+
                     val currentActiveTires = tires.filter { it.isActive }
                     val tireType = tireForThisExpense?.tireType
 
@@ -316,6 +340,7 @@ class ExpenseDetailActivity : AppCompatActivity() {
                         val newestActiveTireSameType = currentActiveTires
                             .filter { it.tireType == tireType }
                             .maxByOrNull { it.installationDate }
+
                         if (newestActiveTireSameType == null) {
                             val newestInactiveTireSameType = tires
                                 .filter { !it.isActive && it.tireType == tireType }
@@ -325,8 +350,10 @@ class ExpenseDetailActivity : AppCompatActivity() {
                                 database.tireReplacementDao().update(
                                     inactiveTire.copy(
                                         isActive = true,
-                                        notes = if (inactiveTire.notes.isNullOrEmpty()) "Активированы ${SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()).format(Date())}"
-                                        else "${inactiveTire.notes}. Активированы ${SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()).format(Date())}"
+                                        notes = if (inactiveTire.notes.isNullOrEmpty())
+                                            "Активированы ${SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()).format(Date())}"
+                                        else
+                                            "${inactiveTire.notes}. Активированы ${SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()).format(Date())}"
                                     )
                                 )
                             }
@@ -337,6 +364,12 @@ class ExpenseDetailActivity : AppCompatActivity() {
                 withContext(Dispatchers.Main) {
                     Toast.makeText(this@ExpenseDetailActivity, "Расход удалён", Toast.LENGTH_SHORT).show()
                     finish()
+                }
+
+            } catch (e: Exception) {
+                Log.e("ExpenseDetail", "Error deleting expense: ${e.message}")
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@ExpenseDetailActivity, "Ошибка удаления", Toast.LENGTH_SHORT).show()
                 }
             }
         }

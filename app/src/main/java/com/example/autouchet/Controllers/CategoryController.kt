@@ -1,8 +1,10 @@
 package com.example.autouchet.Controllers
 
 import android.content.Context
+import android.util.Log
 import com.example.autouchet.Models.AppDatabase
 import com.example.autouchet.Models.ExpenseCategory
+import com.example.autouchet.Utils.SharedPrefsHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -46,8 +48,61 @@ class CategoryController(private val context: Context) {
             if (category?.isDefault == true) {
                 return@withContext false
             }
-            database.categoryDao().delete(category!!)
-            true
+
+            if (category != null) {
+                // Удаляем локально
+                database.categoryDao().delete(category)
+
+                // Синхронизируем удаление с Firebase
+                if (category.cloudId.isNotEmpty()) {
+                    try {
+                        val syncController = SyncController(context)
+                        val groupId = SharedPrefsHelper.getGroupId(context)
+                        if (groupId != null) {
+                            syncController.setGroupId(groupId)
+                            syncController.deleteCategory(category)
+                            Log.d("CategoryController", "Delete synced: ${category.cloudId}")
+                        }
+                    } catch (e: Exception) {
+                        Log.e("CategoryController", "Sync error: ${e.message}")
+                    }
+                }
+                true
+            } else {
+                false
+            }
+        }
+    }
+
+    fun deleteCategoryWithSync(categoryId: Int, onComplete: (Boolean) -> Unit) {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val category = database.categoryDao().getById(categoryId)
+
+                if (category == null || category.isDefault) {
+                    withContext(Dispatchers.Main) { onComplete(false) }
+                    return@launch
+                }
+
+                // Удаляем локально
+                database.categoryDao().delete(category)
+
+                // Синхронизируем удаление
+                if (category.cloudId.isNotEmpty()) {
+                    val syncController = SyncController(context)
+                    val groupId = SharedPrefsHelper.getGroupId(context)
+                    if (groupId != null) {
+                        syncController.setGroupId(groupId)
+                        syncController.deleteCategory(category)
+                    }
+                }
+
+                withContext(Dispatchers.Main) { onComplete(true) }
+
+            } catch (e: Exception) {
+                Log.e("CategoryController", "Error: ${e.message}")
+                withContext(Dispatchers.Main) { onComplete(false) }
+            }
         }
     }
 

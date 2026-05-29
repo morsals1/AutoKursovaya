@@ -1,7 +1,9 @@
 package com.example.autouchet.Controllers
 
 import android.content.Context
+import android.util.Log
 import com.example.autouchet.Models.*
+import com.example.autouchet.Utils.SharedPrefsHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -182,6 +184,41 @@ class ExpenseController(private val context: Context) {
             val expense = database.expenseDao().getById(expenseId)
             expense?.let {
                 database.expenseDao().delete(it)
+            }
+        }
+    }
+
+    fun deleteExpenseWithSync(expenseId: Int, onComplete: () -> Unit) {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val expense = database.expenseDao().getById(expenseId)
+
+                if (expense != null) {
+                    // Удаляем локально
+                    database.expenseDao().delete(expense)
+
+                    // Синхронизируем удаление с Firebase если есть cloudId
+                    if (expense.cloudId.isNotEmpty()) {
+                        val syncController = SyncController(context)
+                        val groupId = SharedPrefsHelper.getGroupId(context)
+                        if (groupId != null) {
+                            syncController.setGroupId(groupId)
+                            syncController.deleteExpense(expense)
+                            Log.d("ExpenseController", "Delete synced to cloud: ${expense.cloudId}")
+                        } else {
+                            Log.w("ExpenseController", "No groupId, delete not synced")
+                        }
+                    }
+                }
+
+                withContext(Dispatchers.Main) {
+                    onComplete()
+                }
+            } catch (e: Exception) {
+                Log.e("ExpenseController", "Error deleting expense: ${e.message}")
+                withContext(Dispatchers.Main) {
+                    onComplete()
+                }
             }
         }
     }
