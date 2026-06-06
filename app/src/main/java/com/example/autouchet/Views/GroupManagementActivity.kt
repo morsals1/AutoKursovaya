@@ -2,6 +2,7 @@ package com.example.autouchet.Views
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.autouchet.Controllers.FirebaseController
@@ -30,21 +31,57 @@ class GroupManagementActivity : AppCompatActivity() {
 
     private fun loadGroupInfo() {
         CoroutineScope(Dispatchers.IO).launch {
-            val groupId = SharedPrefsHelper.getGroupId(this@GroupManagementActivity)
-            if (groupId != null) {
-                try {
-                    val document = firestore.collection("carGroups").document(groupId).get().await()
-                    val inviteCode = document.getString("inviteCode") ?: groupId.take(8)
-                    val members = document.get("members") as? Map<String, String> ?: emptyMap()
+            try {
+                val groupId = SharedPrefsHelper.getGroupId(this@GroupManagementActivity)
+                if (groupId == null) {
                     withContext(Dispatchers.Main) {
-                        binding.inviteCodeTextView.text = inviteCode
-                        val membersText = members.entries.joinToString("\n") { (uid, role) -> "${if (role == "owner") "👑" else "👤"} ${uid.take(8)}... (${if (role == "owner") "Владелец" else "Участник"})" }
-                        binding.membersTextView.text = membersText
+                        binding.inviteCodeTextView.text = "Нет группы"
+                        binding.membersTextView.text = "Создайте или присоединитесь к группе"
                     }
-                } catch (e: Exception) {
+                    return@launch
+                }
+
+                val document = firestore.collection("carGroups").document(groupId).get().await()
+
+                if (document.exists()) {
+                    val inviteCode = document.getString("inviteCode") ?: ""
+                    val ownerUid = document.getString("ownerUid") ?: ""
+                    val members = document.get("members") as? List<String> ?: emptyList()
+
+                    // Загружаем имена участников
+                    val memberNames = mutableListOf<String>()
+                    for (uid in members) {
+                        try {
+                            val userDoc = firestore.collection("users").document(uid).get().await()
+                            val name = userDoc.getString("displayName")
+                                ?: userDoc.getString("email")
+                                ?: uid.take(8) + "..."
+                            val isOwner = uid == ownerUid
+                            val displayName = if (isOwner) "👑 $name (Владелец)" else "👤 $name"
+                            memberNames.add(displayName)
+                        } catch (e: Exception) {
+                            memberNames.add("👤 ${uid.take(8)}...")
+                        }
+                    }
+
                     withContext(Dispatchers.Main) {
-                        binding.inviteCodeTextView.text = groupId.take(8).uppercase()
+                        binding.inviteCodeTextView.text = inviteCode.ifEmpty { "Код не найден" }
+                        binding.membersTextView.text = if (memberNames.isNotEmpty()) {
+                            "Участники (${members.size}):\n\n" + memberNames.joinToString("\n")
+                        } else {
+                            "Нет участников"
+                        }
                     }
+                } else {
+                    withContext(Dispatchers.Main) {
+                        binding.inviteCodeTextView.text = "Группа не найдена"
+                        binding.membersTextView.text = "Ошибка загрузки"
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("GroupManagement", "Error loading group info: ${e.message}")
+                withContext(Dispatchers.Main) {
+                    binding.membersTextView.text = "Ошибка: ${e.message}"
                 }
             }
         }
@@ -53,12 +90,28 @@ class GroupManagementActivity : AppCompatActivity() {
     private fun setupClickListeners() {
         binding.shareCodeButton.setOnClickListener {
             val code = binding.inviteCodeTextView.text.toString()
-            val shareIntent = Intent().apply { action = Intent.ACTION_SEND; putExtra(Intent.EXTRA_TEXT, "Присоединяйтесь к моему автомобилю в приложении АвтоУчёт! Код приглашения: $code"); type = "text/plain" }
-            startActivity(Intent.createChooser(shareIntent, "Поделиться кодом"))
+            if (code.isNotEmpty() && code != "Нет группы" && code != "Код не найден") {
+                val shareIntent = Intent().apply {
+                    action = Intent.ACTION_SEND
+                    putExtra(Intent.EXTRA_TEXT, "Присоединяйтесь к моему автомобилю в АвтоУчёт! Код: $code")
+                    type = "text/plain"
+                }
+                startActivity(Intent.createChooser(shareIntent, "Поделиться кодом"))
+            } else {
+                Toast.makeText(this, "Сначала создайте группу", Toast.LENGTH_SHORT).show()
+            }
         }
+
         binding.joinGroupButton.setOnClickListener {
-            val code = binding.joinCodeEditText.text.toString().trim()
-            if (code.isEmpty()) { Toast.makeText(this, "Введите код приглашения", Toast.LENGTH_SHORT).show(); return@setOnClickListener }
+            val code = binding.joinCodeEditText.text.toString().trim().uppercase()
+            if (code.isEmpty()) {
+                Toast.makeText(this, "Введите код приглашения", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            if (code.length != 8) {
+                Toast.makeText(this, "Код должен быть 8 символов", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
             joinGroup(code)
         }
     }
@@ -68,8 +121,15 @@ class GroupManagementActivity : AppCompatActivity() {
             val result = firebaseController.joinCarGroup(code)
             withContext(Dispatchers.Main) {
                 result.fold(
-                    onSuccess = { groupId -> SharedPrefsHelper.setGroupId(this@GroupManagementActivity, groupId); Toast.makeText(this@GroupManagementActivity, "Вы присоединились к группе!", Toast.LENGTH_SHORT).show(); loadGroupInfo() },
-                    onFailure = { Toast.makeText(this@GroupManagementActivity, "Ошибка: ${it.message}", Toast.LENGTH_SHORT).show() }
+                    onSuccess = { groupId ->
+                        SharedPrefsHelper.setGroupId(this@GroupManagementActivity, groupId)
+                        SharedPrefsHelper.setSyncEnabled(this@GroupManagementActivity, true)
+                        Toast.makeText(this@GroupManagementActivity, "✅ Вы присоединились к группе!", Toast.LENGTH_SHORT).show()
+                        loadGroupInfo()
+                    },
+                    onFailure = { error ->
+                        Toast.makeText(this@GroupManagementActivity, "❌ ${error.message}", Toast.LENGTH_SHORT).show()
+                    }
                 )
             }
         }

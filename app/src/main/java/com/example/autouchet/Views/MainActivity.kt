@@ -107,57 +107,9 @@ class MainActivity : AppCompatActivity() {
                     return@launch
                 }
 
-                // Локальных данных нет, проверяем Firebase только если есть интернет
-                if (!isNetworkAvailable()) {
-                    withContext(Dispatchers.Main) {
-                        showAddCarScreen()
-                    }
-                    return@launch
-                }
-
-                val firestore = FirebaseFirestore.getInstance()
-                val userId = FirebaseAuth.getInstance().currentUser?.uid
-
-                if (userId == null) {
-                    withContext(Dispatchers.Main) {
-                        showAddCarScreen()
-                    }
-                    return@launch
-                }
-
-                // Ищем группы пользователя в Firebase
-                val userGroups = firestore.collection("carGroups")
-                    .whereArrayContains("members", userId)
-                    .get()
-                    .await()
-
-                if (userGroups.isEmpty) {
-                    // Нет групп в облаке - просто показываем форму добавления
-                    withContext(Dispatchers.Main) {
-                        showAddCarScreen()
-                    }
-                    return@launch
-                }
-
-                // Нашли группы, но есть ли локальные данные?
-                val allLocalCars = db.carDao().getAll()
-                if (allLocalCars.isNotEmpty()) {
-                    // Есть локальные данные, но нет выбранного авто
-                    val firstCar = allLocalCars.first()
-                    SharedPrefsHelper.setCurrentCarId(this@MainActivity, firstCar.id)
-                    SharedPrefsHelper.setHasCar(this@MainActivity, true)
-
-                    withContext(Dispatchers.Main) {
-                        initializeApp()
-                        // Показываем диалог, но не блокируем работу
-                        showRestoreDataDialogNonBlocking(userGroups)
-                    }
-                    return@launch
-                }
-
-                // Совсем нет данных - предлагаем восстановить из облака
+                // Локальных данных нет - показываем диалог выбора
                 withContext(Dispatchers.Main) {
-                    showRestoreDataDialog(userGroups)
+                    showNoCarOptionsDialog()
                 }
 
             } catch (e: Exception) {
@@ -178,8 +130,202 @@ class MainActivity : AppCompatActivity() {
                     }
                 } else {
                     withContext(Dispatchers.Main) {
-                        showAddCarScreen()
+                        showNoCarOptionsDialog()
                     }
+                }
+            }
+        }
+    }
+
+    private fun showNoCarOptionsDialog() {
+        AlertDialog.Builder(this)
+            .setTitle("Добро пожаловать!")
+            .setMessage("У вас пока нет автомобилей. Что хотите сделать?")
+            .setPositiveButton("➕ Добавить автомобиль") { _, _ ->
+                startActivity(Intent(this, CarSettingsActivity::class.java))
+                finish()
+            }
+            .setNegativeButton("🔗 Присоединиться по коду") { _, _ ->
+                showJoinGroupDialog()
+            }
+            .setNeutralButton("☁️ Восстановить из облака") { _, _ ->
+                checkCloudData()
+            }
+            .setCancelable(false)
+            .show()
+    }
+
+    private fun showJoinGroupDialog() {
+        val input = android.widget.EditText(this)
+        input.hint = "Введите 8-значный код"
+        input.inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS
+        input.setTextSize(18f)
+        input.gravity = android.view.Gravity.CENTER
+        input.setPadding(32, 32, 32, 32)
+
+        AlertDialog.Builder(this)
+            .setTitle("Присоединиться к группе")
+            .setMessage("Введите код приглашения от владельца группы")
+            .setView(input)
+            .setPositiveButton("Присоединиться") { _, _ ->
+                val code = input.text.toString().trim().uppercase()
+                if (code.length == 8) {
+                    joinGroupByCode(code)
+                } else {
+                    Toast.makeText(this, "Код должен быть 8 символов", Toast.LENGTH_SHORT).show()
+                    showJoinGroupDialog()
+                }
+            }
+            .setNegativeButton("Назад") { _, _ ->
+                showNoCarOptionsDialog()
+            }
+            .setCancelable(false)
+            .show()
+    }
+
+    private fun joinGroupByCode(code: String) {
+        // Сначала инициализируем контроллеры
+        initializeControllers()
+
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val result = firebaseController?.joinCarGroup(code)
+
+                withContext(Dispatchers.Main) {
+                    result?.onSuccess { groupId ->
+                        SharedPrefsHelper.setGroupId(this@MainActivity, groupId)
+                        SharedPrefsHelper.setSyncEnabled(this@MainActivity, true)
+                        Toast.makeText(this@MainActivity, "✅ Вы присоединились к группе!", Toast.LENGTH_SHORT).show()
+
+                        isInitialized = true
+                        setupUI()
+                        loadCategories()
+                        setupClickListeners()
+                        loadGroupData(groupId)
+                    }
+
+                    result?.onFailure { error ->
+                        Toast.makeText(this@MainActivity, "❌ ${error.message}", Toast.LENGTH_SHORT).show()
+                        showNoCarOptionsDialog()
+                    }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@MainActivity, "Ошибка: ${e.message}", Toast.LENGTH_SHORT).show()
+                    showNoCarOptionsDialog()
+                }
+            }
+        }
+    }
+
+    private fun loadGroupData(groupId: String) {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val db = AppDatabase.getDatabase(this@MainActivity)
+                val firestore = FirebaseFirestore.getInstance()
+
+                val groupDoc = firestore.collection("carGroups").document(groupId).get().await()
+                if (!groupDoc.exists()) {
+                    withContext(Dispatchers.Main) { showNoCarOptionsDialog() }
+                    return@launch
+                }
+
+                // Загружаем автомобили
+                val carsSnapshot = firestore.collection("carGroups/$groupId/cars")
+                    .whereEqualTo("isDeleted", false)
+                    .get()
+                    .await()
+
+                var savedCarId = -1
+
+                for (carDoc in carsSnapshot.documents) {
+                    val car = Car(
+                        brand = carDoc.getString("brand") ?: "",
+                        model = carDoc.getString("model") ?: "",
+                        year = carDoc.getLong("year")?.toInt() ?: 0,
+                        horsepower = carDoc.getLong("horsepower")?.toInt() ?: 0,
+                        region = carDoc.getString("region") ?: "",
+                        currentMileage = carDoc.getLong("currentMileage")?.toInt() ?: 0,
+                        averageConsumption = carDoc.getDouble("averageConsumption") ?: 8.5,
+                        cloudId = carDoc.id,
+                        updatedAt = carDoc.getLong("updatedAt") ?: System.currentTimeMillis()
+                    )
+                    val localId = db.carDao().insert(car).toInt()
+                    savedCarId = localId
+                }
+
+                if (savedCarId != -1) {
+                    SharedPrefsHelper.setCurrentCarId(this@MainActivity, savedCarId)
+                    SharedPrefsHelper.setHasCar(this@MainActivity, true)
+
+                    // Загружаем расходы
+                    val expensesSnapshot = firestore.collection("carGroups/$groupId/expenses")
+                        .whereEqualTo("isDeleted", false)
+                        .get()
+                        .await()
+
+                    for (expenseDoc in expensesSnapshot.documents) {
+                        if (db.expenseDao().getByCloudId(expenseDoc.id) == null) {
+                            val expense = Expense(
+                                carId = savedCarId,
+                                amount = expenseDoc.getDouble("amount") ?: 0.0,
+                                category = expenseDoc.getString("category") ?: "",
+                                categoryId = expenseDoc.getLong("categoryId")?.toInt(),
+                                date = expenseDoc.getLong("date")?.let { Date(it) } ?: Date(),
+                                mileage = expenseDoc.getLong("mileage")?.toInt() ?: 0,
+                                comment = expenseDoc.getString("comment") ?: "",
+                                shopName = expenseDoc.getString("shopName") ?: "",
+                                cloudId = expenseDoc.id,
+                                updatedAt = expenseDoc.getLong("updatedAt") ?: System.currentTimeMillis()
+                            )
+                            db.expenseDao().insert(expense)
+                        }
+                    }
+                }
+
+                withContext(Dispatchers.Main) {
+                    syncController?.setGroupId(groupId)
+                    syncController?.startRealtimeSync { loadCarData() }
+                    syncController?.startAutoSync()
+                    loadCarData()
+                }
+
+            } catch (e: Exception) {
+                Log.e("MainActivity", "Error loading group data: ${e.message}")
+                withContext(Dispatchers.Main) { showNoCarOptionsDialog() }
+            }
+        }
+    }
+
+    private fun checkCloudData() {
+        CoroutineScope(Dispatchers.IO).launch {
+            if (!isNetworkAvailable()) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@MainActivity, "Нет подключения к интернету", Toast.LENGTH_SHORT).show()
+                    showNoCarOptionsDialog()
+                }
+                return@launch
+            }
+
+            val firestore = FirebaseFirestore.getInstance()
+            val userId = FirebaseAuth.getInstance().currentUser?.uid
+
+            if (userId == null) {
+                withContext(Dispatchers.Main) { showNoCarOptionsDialog() }
+                return@launch
+            }
+
+            val userGroups = firestore.collection("carGroups")
+                .whereArrayContains("members", userId)
+                .get()
+                .await()
+
+            withContext(Dispatchers.Main) {
+                if (userGroups.isEmpty) {
+                    Toast.makeText(this@MainActivity, "Нет сохраненных данных в облаке", Toast.LENGTH_SHORT).show()
+                    showNoCarOptionsDialog()
+                } else {
+                    showRestoreDataDialog(userGroups)
                 }
             }
         }
@@ -223,15 +369,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun showAddCarScreen() {
-        // НЕ очищаем SharedPrefs, чтобы сохранить groupId
-        SharedPrefsHelper.setHasCar(this, false)
-        SharedPrefsHelper.setCurrentCarId(this, -1)
-
-        Toast.makeText(this, "Добавьте автомобиль для начала работы", Toast.LENGTH_LONG).show()
-        startActivity(Intent(this, CarSettingsActivity::class.java))
-        finish()
-    }
     private fun showRestoreDataDialog(userGroups: com.google.firebase.firestore.QuerySnapshot) {
         val groups = userGroups.documents
 
@@ -251,7 +388,7 @@ class MainActivity : AppCompatActivity() {
             .setNeutralButton("Начать заново") { _, _ ->
                 // Очищаем все и начинаем с чистого листа
                 clearLocalData()
-                showAddCarScreen()
+                showNoCarOptionsDialog()
             }
             .setCancelable(false)
             .show()
@@ -406,7 +543,7 @@ class MainActivity : AppCompatActivity() {
                 Log.e("MainActivity", "Error restoring data: ${e.message}", e)
                 withContext(Dispatchers.Main) {
                     Toast.makeText(this@MainActivity, "Ошибка восстановления: ${e.message}", Toast.LENGTH_LONG).show()
-                    showAddCarScreen()
+                    showNoCarOptionsDialog()
                 }
             }
         }

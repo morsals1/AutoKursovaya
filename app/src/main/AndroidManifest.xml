@@ -39,6 +39,9 @@
         tools:ignore="ForegroundServicePermission"
         tools:targetApi="31">
         <activity
+            android:name=".Views.PartsSearchActivity"
+            android:exported="false" />
+        <activity
             android:name=".Views.GroupManagementActivity"
             android:exported="false" />
         <activity

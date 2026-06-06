@@ -1,5 +1,6 @@
 package com.example.autouchet.Views
 
+import android.app.AlertDialog
 import android.app.DatePickerDialog
 import android.content.Intent
 import android.os.Bundle
@@ -101,7 +102,28 @@ class AddExpenseActivity : AppCompatActivity() {
         binding.manageCategoriesButton.setOnClickListener {
             startActivity(Intent(this, CategoriesActivity::class.java))
         }
+
+        binding.searchPartsButton.setOnClickListener {
+            val intent = Intent(this, PartsSearchActivity::class.java)
+            startActivity(intent)
+        }
     }
+
+    // Добавьте этот метод в класс (вне setupClickListeners)
+    private fun suggestPartsSearch(expenseId: Int) {
+        AlertDialog.Builder(this)
+            .setTitle("Поиск запчастей")
+            .setMessage("Хотите найти эту запчасть по лучшей цене?")
+            .setPositiveButton("Найти") { _, _ ->
+                val intent = Intent(this, PartsSearchActivity::class.java)
+                intent.putExtra("expense_id", expenseId)
+                startActivity(intent)
+            }
+            .setNegativeButton("Позже", null)
+            .show()
+    }
+
+
 
     private fun loadCategories() {
         scope.launch {
@@ -291,6 +313,12 @@ class AddExpenseActivity : AppCompatActivity() {
                     if (binding.createReminderCheckBox.isChecked) {
                         createTireReminder(selectedDate, mileage)
                     }
+                }
+
+                // ДОБАВЬТЕ ЭТОТ КОД:
+                // Автоматически предлагаем поиск запчастей
+                if (category == "Ремонт" || category == "Обслуживание") {
+                    suggestPartsSearch(expenseId.toInt())
                 }
 
                 Toast.makeText(this@AddExpenseActivity, "Расход сохранён", Toast.LENGTH_SHORT).show()
